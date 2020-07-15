@@ -10,6 +10,7 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.messaging.rsocket.RSocketRequester;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.SignalType;
 import rsb.rsocket.BootifulProperties;
 import rsb.rsocket.routing.Customer;
 
@@ -40,9 +41,15 @@ class Client implements ApplicationListener<ApplicationReadyEvent> {
 
 	@Override
 	public void onApplicationEvent(ApplicationReadyEvent event) {
-		var id = 1;
-		this.rSocketRequester.route("customers.{id}", id).retrieveMono(Customer.class)
-				.subscribe(log::info);
+		this.rSocketRequester.route("customers.{id}", 1).retrieveMono(Customer.class)
+				.doOnNext(log::info).doFinally(this::line).subscribe();
+
+		this.rSocketRequester.route("customers").retrieveFlux(Customer.class)
+				.doOnNext(log::info).doFinally(this::line).subscribe();
+	}
+
+	private void line(SignalType st) {
+		log.info("---------------------");
 	}
 
 }
