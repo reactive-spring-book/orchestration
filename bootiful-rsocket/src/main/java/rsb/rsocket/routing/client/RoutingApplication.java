@@ -41,11 +41,19 @@ class Client implements ApplicationListener<ApplicationReadyEvent> {
 
 	@Override
 	public void onApplicationEvent(ApplicationReadyEvent event) {
-		this.rSocketRequester.route("customers.{id}", 1).retrieveMono(Customer.class)
-				.doOnNext(log::info).doFinally(this::line).subscribe();
+		this.rSocketRequester//
+				.route("customers.{id}", 1)//
+				.retrieveMono(Customer.class)//
+				.doOnNext(log::info)//
+				.doFinally(this::line)//
+				.subscribe();
 
-		this.rSocketRequester.route("customers").retrieveFlux(Customer.class)
-				.doOnNext(log::info).doFinally(this::line).subscribe();
+		this.rSocketRequester//
+				.route("customers")//
+				.retrieveFlux(Customer.class)//
+				.doOnNext(log::info)//
+				.doFinally(this::line)//
+				.subscribe();
 	}
 
 	private void line(SignalType st) {
