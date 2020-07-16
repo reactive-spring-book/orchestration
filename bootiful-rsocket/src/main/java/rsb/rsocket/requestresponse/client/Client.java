@@ -6,6 +6,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.messaging.rsocket.RSocketRequester;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 import java.util.Date;
 import java.util.Map;
@@ -19,8 +20,13 @@ class Client implements ApplicationListener<ApplicationReadyEvent> {
 
 	@Override
 	public void onApplicationEvent(ApplicationReadyEvent are) {
-		var map = Map.<String, Object>of("client", Client.class.getName(), "date",
-				new Date());
+		var rsocket = this.rSocketRequester.rsocket(); // much easier!
+		var availability = rsocket.availability();
+		Assert.isTrue(availability == 1.0,
+				"the availability must be 1.0 in order to proceed!");
+		log.info("the data mimeType is " + this.rSocketRequester.dataMimeType());
+		log.info("the metadata mimeType is " + this.rSocketRequester.metadataMimeType());
+
 		this.rSocketRequester//
 				.route("greeting")//
 				.data("Reactive Spring")//
