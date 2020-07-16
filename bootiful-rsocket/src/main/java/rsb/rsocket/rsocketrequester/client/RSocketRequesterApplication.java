@@ -47,8 +47,11 @@ class Client implements ApplicationListener<ApplicationReadyEvent> {
 				"the availability must be 1.0 in order to proceed!");
 		log.info("the data mimeType is " + this.rSocketRequester.dataMimeType());
 		log.info("the metadata mimeType is " + this.rSocketRequester.metadataMimeType());
-		this.rSocketRequester.route("greetings").data("Spring fans")
-				.retrieveMono(String.class).subscribe(log::info);
+		this.rSocketRequester//
+				.route("greetings")//
+				.data("Spring fans")//
+				.retrieveMono(String.class)//
+				.subscribe(log::info);
 	}
 
 }
