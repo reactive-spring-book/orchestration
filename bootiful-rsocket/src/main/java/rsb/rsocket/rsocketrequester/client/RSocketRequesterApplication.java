@@ -24,7 +24,7 @@ public class RSocketRequesterApplication {
 	}
 
 	@Bean
-	RSocketRequester customRSocketRequester(BootifulProperties properties,
+	RSocketRequester rSocketRequester(BootifulProperties properties,
 			RSocketRequester.Builder builder) {
 		return builder.connectTcp(properties.getRsocket().getHostname(),
 				properties.getRsocket().getPort()).block();
