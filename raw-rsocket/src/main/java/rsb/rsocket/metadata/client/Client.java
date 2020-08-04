@@ -42,13 +42,16 @@ class Client implements ApplicationListener<ApplicationReadyEvent> {
 				.flatMapMany(rSocket -> Flux//
 						.just(Locale.CHINA, Locale.FRANCE, Locale.JAPANESE)//
 						.delayElements(Duration.ofSeconds((long) (Math.random() * 30)))
-						.flatMap(locale -> rSocket
-								.metadataPush(update(this.clientId, locale)))//
+						.flatMap(locale -> {
+							Payload update = this
+									.buildMetadataUpdatePayload(this.clientId, locale);//
+							return rSocket.metadataPush(update);
+						})//
 				) //
 				.subscribe();
 	}
 
-	private Payload update(String clientId, Locale locale) {
+	private Payload buildMetadataUpdatePayload(String clientId, Locale locale) {
 		var map = Map.<String, Object>of(Constants.LANG_HEADER, locale.getLanguage(),
 				Constants.CLIENT_ID_HEADER, clientId);
 		return DefaultPayload.create("", encodingUtils.encodeMetadata(map));

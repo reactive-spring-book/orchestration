@@ -38,7 +38,7 @@ class Service implements SocketAcceptor, ApplicationListener<ApplicationReadyEve
 			@Override
 			public Mono<Void> fireAndForget(Payload payload) {
 				log.info("new message received: " + payload.getDataUtf8());
-				return Mono.empty();
+				return Mono.empty();// <1>
 			}
 		};
 

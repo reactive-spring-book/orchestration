@@ -28,7 +28,7 @@ class Client implements ApplicationListener<ApplicationReadyEvent>, Ordered {
 						this.properties.getRsocket().getPort()))//
 				.start()//
 				.flatMapMany(socket -> socket
-						.fireAndForget(DefaultPayload.create("Reactive Spring")))
+						.fireAndForget(DefaultPayload.create("Reactive Spring")))// <1>
 				.subscribe(log::info);
 	}
 

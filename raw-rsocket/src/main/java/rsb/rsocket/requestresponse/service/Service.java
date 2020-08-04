@@ -19,27 +19,26 @@ import rsb.rsocket.EncodingUtils;
 class Service
 		implements SocketAcceptor, Ordered, ApplicationListener<ApplicationReadyEvent> {
 
-	private final EncodingUtils encodingUtils;
-
 	private final BootifulProperties properties;
 
+	// <1>
 	@Override
 	public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
 		log.info("starting " + Service.class.getName() + '.');
 		RSocketFactory //
-				.receive()//
-				.acceptor(this)//
-				.transport(TcpServerTransport.create(
+				.receive()// <2>
+				.acceptor(this)// <3>
+				.transport(TcpServerTransport.create(// <4>
 						this.properties.getRsocket().getHostname(),
 						this.properties.getRsocket().getPort()))//
-				.start() //
-				.subscribe();
+				.start() // <5>
+				.subscribe();//
 	}
 
-	@Override
+	@Override // <6>
 	public Mono<RSocket> accept(ConnectionSetupPayload connectionSetupPayload,
 			RSocket rSocket) {
-		var rs = new AbstractRSocket() {
+		var rs = new AbstractRSocket() {// <7>
 
 			@Override
 			public Mono<Payload> requestResponse(Payload payload) {

@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 @EnableConfigurationProperties(BootifulProperties.class)
 class BootifulAutoConfiguration {
 
-	@Bean
+	@Bean // <1>
 	EncodingUtils encodingUtils(ObjectMapper objectMapper) {
 		return new EncodingUtils(objectMapper);
 	}

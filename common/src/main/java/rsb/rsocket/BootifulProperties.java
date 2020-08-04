@@ -4,7 +4,7 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Data
-@ConfigurationProperties("bootiful")
+@ConfigurationProperties("bootiful") // <1>
 public class BootifulProperties {
 
 	private final RSocket rsocket = new RSocket();
@@ -12,9 +12,9 @@ public class BootifulProperties {
 	@Data
 	public static class RSocket {
 
-		private String hostname = "localhost";
+		private String hostname = "localhost"; // <2>
 
-		private int port = 8181;
+		private int port = 8182; // <3>
 
 	}
 

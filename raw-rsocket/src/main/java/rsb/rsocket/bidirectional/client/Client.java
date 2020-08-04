@@ -21,7 +21,7 @@ import static rsb.rsocket.bidirectional.ClientHealthState.STARTED;
 import static rsb.rsocket.bidirectional.ClientHealthState.STOPPED;
 
 @Slf4j
-class Client implements SocketAcceptor, Constants, Lifecycle {
+class Client implements SocketAcceptor, Constants/* , Lifecycle */ {
 
 	private final EncodingUtils encodingUtils;
 
@@ -31,6 +31,7 @@ class Client implements SocketAcceptor, Constants, Lifecycle {
 
 	private final int servicePort;
 
+	// <1>
 	Client(EncodingUtils utils, String uuid, String svcHost, int svcPort) {
 		this.uid = uuid;
 		this.encodingUtils = utils;
@@ -38,35 +39,24 @@ class Client implements SocketAcceptor, Constants, Lifecycle {
 		this.servicePort = svcPort;
 	}
 
-	@Override
-	public void start() {
+	Flux<GreetingResponse> start() {
 		log.info("launching " + this.uid + " @ " + new Date().toString());
 		var greetingRequestPayload = this.encodingUtils
 				.encode(new GreetingRequest("Client #" + this.uid));
-		RSocketFactory//
+		return RSocketFactory//
 				.connect()//
 				.acceptor(this)//
 				.transport(
 						TcpClientTransport.create(this.serviceHostname, this.servicePort)) //
 				.start()//
-				.flatMapMany(instance -> instance //
+				.flatMapMany(instance -> instance // <2>
 						.requestStream(DefaultPayload.create(greetingRequestPayload)) //
 						.map(payload -> encodingUtils.decode(payload.getDataUtf8(),
 								GreetingResponse.class))//
-				)//
-				.subscribe(greetingResponse -> log.info(greetingResponse.getMessage()));
+		);
 	}
 
-	@Override
-	public void stop() {// noop
-	}
-
-	@Override
-	public boolean isRunning() {
-		return true;
-	}
-
-	// telemetry data from the client to the service.
+	// <3>
 	@Override
 	public Mono<RSocket> accept(ConnectionSetupPayload setup, RSocket serverRSocket) {
 

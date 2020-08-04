@@ -20,40 +20,28 @@ import java.time.Duration;
 @Log4j2
 @Component
 @RequiredArgsConstructor
-class Ping implements ApplicationListener<ApplicationReadyEvent>, Ordered {
+class Ping implements ApplicationListener<ApplicationReadyEvent> {
 
 	private final BootifulProperties properties;
 
 	@Override
 	public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
 
-		log.info("starting " + this.getClass().getName());
+		Flux<Payload> ping = Flux // <1>
+				.interval(Duration.ofSeconds(1)).map(i -> DefaultPayload.create("ping"));
 
-		Mono<RSocket> start = RSocketFactory//
+		RSocketFactory//
 				.connect()//
 				.transport(TcpClientTransport.create(
 						this.properties.getRsocket().getHostname(),
 						this.properties.getRsocket().getPort()))//
-				.start();
-
-		Flux<Payload> ping = Flux.interval(Duration.ofSeconds(1))
-				.map(i -> DefaultPayload.create("ping"));
-
-		start //
-				.flatMapMany(socket -> socket//
+				.start().flatMapMany(socket -> socket//
 						.requestChannel(ping)//
 						.map(Payload::getDataUtf8)//
 						.doOnNext(str -> log
 								.info("received " + str + " in " + getClass().getName()))//
 						.take(10))//
-				// .doFinally(signal -> socket.dispose())) //
-				.then() //
-				.block();
-	}
-
-	@Override
-	public int getOrder() {
-		return Ordered.LOWEST_PRECEDENCE;
+				.subscribe();
 	}
 
 }

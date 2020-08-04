@@ -23,12 +23,6 @@ class Service implements SocketAcceptor, ApplicationListener<ApplicationReadyEve
 
 	private final BootifulProperties properties;
 
-	private static void log(StringBuilder stringBuilder, String clientId, String string) {
-		stringBuilder//
-				.append(String.format("(%s) %s", clientId, string))//
-				.append(System.lineSeparator());
-	}
-
 	@Override
 	public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
 		log.info("starting " + Service.class.getName() + '.');
@@ -42,16 +36,6 @@ class Service implements SocketAcceptor, ApplicationListener<ApplicationReadyEve
 				.subscribe();
 	}
 
-	private Mono<Void> onMetadataPush(Map<String, Object> metadata) {
-		var clientId = (String) metadata.get(Constants.CLIENT_ID_HEADER);
-		var stringBuilder = new StringBuilder().append(System.lineSeparator());
-		log(stringBuilder, clientId, "---------------------------------");
-		metadata.forEach((k, v) -> log(stringBuilder, clientId, k + '=' + v));
-		log.info(stringBuilder.toString());
-		return Mono.empty();
-	}
-
-	//
 	@Override
 	public Mono<RSocket> accept(ConnectionSetupPayload connectionSetupPayload,
 			RSocket rSocket) {
@@ -60,11 +44,25 @@ class Service implements SocketAcceptor, ApplicationListener<ApplicationReadyEve
 			@Override
 			public Mono<Void> metadataPush(Payload payload) {
 				var metadataUtf8 = payload.getMetadataUtf8();
-				onMetadataPush(encodingUtils.decodeMetadata(metadataUtf8));
-				return Mono.empty();
+				var metadata = encodingUtils.decodeMetadata(metadataUtf8);// <1>
+				return onMetadataPush(metadata);// <2>
 			}
 		};
 		return Mono.just(rs);
+	}
+
+	private Mono<Void> onMetadataPush(Map<String, Object> metadata) {
+		var clientId = (String) metadata.get(Constants.CLIENT_ID_HEADER);
+		var stringBuilder = new StringBuilder().append(System.lineSeparator());
+		stringBuilder//
+				.append(String.format("(%s) %s", clientId,
+						"---------------------------------"))//
+				.append(System.lineSeparator());
+		metadata.forEach((k, v) -> stringBuilder//
+				.append(String.format("(%s) %s", clientId, k + '=' + v))//
+				.append(System.lineSeparator()));
+		log.info(stringBuilder.toString());
+		return Mono.empty();
 	}
 
 }

@@ -5,12 +5,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Schedulers;
 import rsb.rsocket.BootifulProperties;
 import rsb.rsocket.EncodingUtils;
+import rsb.rsocket.bidirectional.GreetingResponse;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 import java.util.stream.IntStream;
 
 @Slf4j
@@ -24,25 +25,20 @@ class ClientLauncher implements ApplicationListener<ApplicationReadyEvent> {
 
 	private final BootifulProperties properties;
 
-	private final ScheduledExecutorService executorService = Executors
-			.newScheduledThreadPool(maxClients);
-
 	@Override
 	public void onApplicationEvent(ApplicationReadyEvent event) {
 		var nestedMax = Math.max(5, (int) (Math.random() * maxClients));
-		log.info("launching " + nestedMax + " clients.");
-		IntStream //
-				.range(0, nestedMax)//
-				.forEach(value -> {
-					var uid = Long.toString(value);
-					var delay = Math.max(1000L,
-							(long) (Math.random() * (1000 * nestedMax)));
-					var client = new Client(this.encodingUtils, uid,
-							this.properties.getRsocket().getHostname(),
-							this.properties.getRsocket().getPort());
-					this.executorService.schedule(client::start, delay,
-							TimeUnit.MILLISECONDS);
-				});
+		var hostname = this.properties.getRsocket().getHostname();// <1>
+		var port = this.properties.getRsocket().getPort();
+		log.info("launching " + nestedMax + " clients connecting to " + hostname + ':'
+				+ port + ".");
+		Flux.fromStream(IntStream.range(0, nestedMax).boxed())// <2>
+				.map(id -> new Client(this.encodingUtils, Long.toString(id), hostname,
+						port))// <3>
+				.flatMap(client -> Flux.just(client)
+						.delayElements(Duration.ofSeconds((long) (30 * Math.random()))))// <4>
+				.flatMap(Client::start)// <5>
+				.map(GreetingResponse::toString).subscribe(log::info);
 	}
 
 }

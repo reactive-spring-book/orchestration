@@ -19,9 +19,11 @@ public class SetupApplication {
 	@Bean
 	RSocketRequester rSocketRequester(BootifulProperties properties,
 			RSocketRequester.Builder builder) {
-		return builder.setupData("setup data!").setupRoute("setup")
+		return builder//
+				.setupData("setup data!")//
+				.setupRoute("setup")//
 				.connectTcp(properties.getRsocket().getHostname(),
-						properties.getRsocket().getPort())
+						properties.getRsocket().getPort())//
 				.block();
 	}
 

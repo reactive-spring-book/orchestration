@@ -24,12 +24,12 @@ class Client implements ApplicationListener<ApplicationReadyEvent>, Ordered {
 	public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
 		log.info("starting " + Client.class.getName() + '.');
 		Flux<String> reply = RSocketFactory//
-				.connect()//
+				.connect()// <1>
 				.transport(TcpClientTransport.create(
 						this.properties.getRsocket().getHostname(),
 						this.properties.getRsocket().getPort()))//
 				.start()//
-				.flatMapMany(socket -> {
+				.flatMapMany(socket -> { // <2>
 					var reactiveSpring = DefaultPayload.create("Reactive Spring");
 					return socket//
 							.requestResponse(reactiveSpring)//

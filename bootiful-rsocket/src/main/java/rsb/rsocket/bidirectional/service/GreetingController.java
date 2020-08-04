@@ -13,7 +13,10 @@ import rsb.rsocket.bidirectional.ClientHealthState;
 import rsb.rsocket.bidirectional.GreetingRequest;
 import rsb.rsocket.bidirectional.GreetingResponse;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static rsb.rsocket.bidirectional.ClientHealthState.STOPPED;
 
@@ -21,8 +24,6 @@ import static rsb.rsocket.bidirectional.ClientHealthState.STOPPED;
 @Controller
 @RequiredArgsConstructor
 class GreetingController {
-
-	private final GreetingService greetingService;
 
 	@MessageMapping("greetings")
 	Flux<GreetingResponse> greetings(RSocketRequester client,
@@ -37,7 +38,11 @@ class GreetingController {
 				.retrieveFlux(ClientHealthState.class)//
 				.filter(chs -> chs.getState().equalsIgnoreCase(STOPPED))//
 				.doOnNext(chs -> log.info(chs.toString()));
-		var replyPayloadFlux = this.greetingService.greet(greetingRequest);
+		var replyPayloadFlux = Flux
+				.fromStream(Stream.generate(() -> new GreetingResponse("Hello, "
+						+ greetingRequest.getName() + " @ " + Instant.now() + "!")))
+				.delayElements(
+						Duration.ofSeconds(Math.max(3, (long) (Math.random() * 10))));
 		return replyPayloadFlux//
 				.takeUntilOther(clientHealthStateFlux)//
 				.doOnNext(gr -> log.info(gr.toString()));

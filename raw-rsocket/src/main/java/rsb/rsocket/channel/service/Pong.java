@@ -40,13 +40,13 @@ class Pong implements SocketAcceptor, ApplicationListener<ApplicationReadyEvent>
 		var rs = new AbstractRSocket() {
 
 			@Override
-			public Flux<Payload> requestChannel(Publisher<Payload> payloads) {
+			public Flux<Payload> requestChannel(Publisher<Payload> payloads) { // <1>
 				return Flux //
 						.from(payloads) //
 						.map(Payload::getDataUtf8) //
 						.doOnNext(
-								str -> log.info("received " + str + "  in " + getClass())) //
-						.map(PingPongApplication::reply) //
+								str -> log.info("received " + str + " in " + getClass())) //
+						.map(request -> "pong") //
 						.map(DefaultPayload::create);
 			}
 		};

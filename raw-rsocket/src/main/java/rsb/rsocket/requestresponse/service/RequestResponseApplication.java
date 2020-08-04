@@ -10,7 +10,7 @@ public class RequestResponseApplication {
 	@SneakyThrows
 	public static void main(String[] arrrImAPirate) {
 		SpringApplication.run(RequestResponseApplication.class, arrrImAPirate);
-		System.in.read();
+		System.in.read();// <1>
 	}
 
 }
