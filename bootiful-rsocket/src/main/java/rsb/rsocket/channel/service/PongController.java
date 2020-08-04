@@ -11,7 +11,7 @@ import reactor.core.publisher.Flux;
 class PongController {
 
 	@MessageMapping("pong")
-	public Flux<String> pong(@Payload Flux<String> ping) {
+	Flux<String> pong(@Payload Flux<String> ping) {
 		return ping.map(PingPongApplication::reply).doOnNext(log::info);
 	}
 
