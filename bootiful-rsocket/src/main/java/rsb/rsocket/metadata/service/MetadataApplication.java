@@ -17,16 +17,4 @@ public class MetadataApplication {
 		SpringApplication.run(MetadataApplication.class, args);
 	}
 
-	@Bean
-	RSocketStrategiesCustomizer rSocketStrategiesCustomizer() {
-		return strategies -> strategies//
-				.metadataExtractorRegistry(registry -> {
-					registry.metadataToExtract(Constants.CLIENT_ID, String.class,
-							Constants.CLIENT_ID_HEADER);
-					registry.metadataToExtract(Constants.LANG, String.class,
-							Constants.LANG_HEADER);
-				})//
-				.decoders(decoders -> decoders.add(StringDecoder.allMimeTypes()));
-	}
-
 }

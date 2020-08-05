@@ -1,21 +1,21 @@
-package rsb.rsocket.setup.client;
+package rsb.rsocket.metadata.client;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.rsocket.RSocketRequester;
+import org.springframework.util.MimeTypeUtils;
 import rsb.rsocket.BootifulProperties;
 
 @Configuration
 class ClientConfiguration {
 
 	@Bean
-	RSocketRequester rSocketRequester(BootifulProperties properties,
+	RSocketRequester rsocketRequester(BootifulProperties properties,
 			RSocketRequester.Builder builder) {
 		return builder//
-				.setupData("setup data!")// <1>
-				.setupRoute("setup")// <2>
+				.dataMimeType(MimeTypeUtils.APPLICATION_JSON)
 				.connectTcp(properties.getRsocket().getHostname(),
-						properties.getRsocket().getPort())// <3>
+						properties.getRsocket().getPort())//
 				.block();
 	}
 

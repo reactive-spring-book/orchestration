@@ -7,7 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class RequestResponseApplication {
 
 	public static void main(String[] arrrImAPirate) {
-		System.setProperty("spring.profiles.active", "service");
+		System.setProperty("spring.profiles.active", "service");// <1>
 		SpringApplication.run(RequestResponseApplication.class, arrrImAPirate);
 	}
 

@@ -18,8 +18,11 @@ class Client implements ApplicationListener<ApplicationReadyEvent> {
 
 	@Override
 	public void onApplicationEvent(ApplicationReadyEvent event) {
-		this.rSocketRequester.route("greetings").data(new GreetingRequest("Spring fans"))
-				.retrieveMono(GreetingResponse.class).subscribe(log::info);
+		this.rSocketRequester//
+				.route("greetings")//
+				.data(new GreetingRequest("Spring fans"))//
+				.retrieveMono(GreetingResponse.class)//
+				.subscribe(log::info);
 	}
 
 }

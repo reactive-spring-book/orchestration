@@ -17,17 +17,16 @@ class Client implements ApplicationListener<ApplicationReadyEvent> {
 
 	@Override
 	public void onApplicationEvent(ApplicationReadyEvent are) {
-		var rsocket = this.rSocketRequester.rsocket(); // much easier!
-		var availability = rsocket.availability();
+		var rsocket = this.rSocketRequester.rsocket(); // <1>
+		var availability = rsocket.availability();// <2>
 		Assert.isTrue(availability == 1.0,
 				"the availability must be 1.0 in order to proceed!");
-		log.info("the data mimeType is " + this.rSocketRequester.dataMimeType());
+		log.info("the data mimeType is " + this.rSocketRequester.dataMimeType());// <3>
 		log.info("the metadata mimeType is " + this.rSocketRequester.metadataMimeType());
-
 		this.rSocketRequester//
-				.route("greeting")//
-				.data("Reactive Spring")//
-				.retrieveMono(String.class)//
+				.route("greeting")// <4>
+				.data("Reactive Spring")// <5>
+				.retrieveMono(String.class)// <6>
 				.subscribe(System.out::println);
 	}
 

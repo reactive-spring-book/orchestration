@@ -13,8 +13,7 @@ import rsb.rsocket.BootifulProperties;
 @Configuration
 class ClientConfiguration {
 
-	// make sure we are guaranteed to be the last in
-	// the line
+	// <1>
 	@Bean
 	@Order(Ordered.HIGHEST_PRECEDENCE)
 	RSocketStrategiesCustomizer rSocketStrategiesCustomizer() {

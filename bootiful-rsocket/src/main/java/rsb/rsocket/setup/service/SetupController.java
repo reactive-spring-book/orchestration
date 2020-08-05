@@ -13,7 +13,7 @@ import java.util.Map;
 class SetupController {
 
 	// this handles the initial setup frame as well as all subsequent metadata push frames
-	@ConnectMapping("setup")
+	@ConnectMapping("setup") // <1>
 	public void setup(@Payload String setupPayload,
 			@Headers Map<String, Object> headers) {
 		log.info("setup payload: " + setupPayload);
