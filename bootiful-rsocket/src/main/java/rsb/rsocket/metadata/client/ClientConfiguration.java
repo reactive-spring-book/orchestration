@@ -13,7 +13,7 @@ class ClientConfiguration {
 	RSocketRequester rsocketRequester(BootifulProperties properties,
 			RSocketRequester.Builder builder) {
 		return builder//
-				.dataMimeType(MimeTypeUtils.APPLICATION_JSON)
+				.dataMimeType(MimeTypeUtils.APPLICATION_JSON)// <1>
 				.connectTcp(properties.getRsocket().getHostname(),
 						properties.getRsocket().getPort())//
 				.block();

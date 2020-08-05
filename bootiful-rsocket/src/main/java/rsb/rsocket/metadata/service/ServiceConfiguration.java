@@ -13,6 +13,7 @@ class ServiceConfiguration {
 	RSocketStrategiesCustomizer rSocketStrategiesCustomizer() {
 		return strategies -> strategies//
 				.metadataExtractorRegistry(registry -> {
+					// <1>
 					registry.metadataToExtract(Constants.CLIENT_ID, String.class,
 							Constants.CLIENT_ID_HEADER);
 					registry.metadataToExtract(Constants.LANG, String.class,

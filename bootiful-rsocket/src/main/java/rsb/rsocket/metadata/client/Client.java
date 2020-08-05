@@ -19,42 +19,23 @@ class Client implements ApplicationListener<ApplicationReadyEvent> {
 
 	private final RSocketRequester rSocketRequester;
 
-	private final String clientId = UUID.randomUUID().toString();
-
 	@Override
 	public void onApplicationEvent(ApplicationReadyEvent event) {
-		this.rSocketRequester.route("metadata")
-				.metadata(this.clientId, Constants.CLIENT_ID)
-				.metadata(Locale.JAPANESE.getLanguage(), Constants.LANG)
-				.data(Mono.empty()).send().subscribe();
+
+		Mono<Void> one = this.rSocketRequester//
+				.route("message")
+				.metadata(UUID.randomUUID().toString(), Constants.CLIENT_ID)// <1>
+				.metadata(Locale.JAPANESE.getLanguage(), Constants.LANG)// <2>
+				.send();
+
+		Mono<Void> two = this.rSocketRequester//
+				.route("message").metadata(metadataSpec -> {
+					metadataSpec.metadata(UUID.randomUUID().toString(),
+							Constants.CLIENT_ID);
+					metadataSpec.metadata(Locale.JAPANESE.getLanguage(), Constants.LANG);
+				}).send();
+
+		one.then(two).subscribe();
 	}
 
 }
-
-/*
- *
- *
- *
- * // Client(RSocketRequester rSocketRequester, String clientId) { //
- * this.rSocketRequester = rSocketRequester; //// this.clientId = clientId; // }
- *
- * private void encodeMetadataHeader( CompositeByteBuf metadataByteBuf, MimeType
- * headerContentType, byte[] bytes) { CompositeMetadataFlyweight//
- * .encodeAndAddMetadata(metadataByteBuf, ByteBufAllocator.DEFAULT,
- * headerContentType.toString(), ByteBufAllocator.DEFAULT.buffer().writeBytes(bytes)); }
- *
- * private Mono<Void> sendMetadataLocaleUpdate(Locale locale) { CompositeByteBuf
- * metadataByteBuf = buildMetadataCompositeByteBuf(locale); return this.rSocketRequester//
- * .rsocket()// .metadataPush( ByteBufPayload.create(Unpooled.EMPTY_BUFFER,
- * metadataByteBuf)); }
- *
- * private CompositeByteBuf buildMetadataCompositeByteBuf(Locale locale) { Map<MimeType,
- * byte[]> headers = Map.of( Constants.LANG, locale.getLanguage().getBytes(), //
- * Constants.CLIENT_ID, this.clientId.getBytes() ); CompositeByteBuf metadataByteBuf =
- * ByteBufAllocator.DEFAULT.compositeBuffer(); headers.forEach((mimeType, value) ->
- * encodeMetadataHeader(metadataByteBuf, mimeType, value)); return metadataByteBuf; }
- *
- * private void originalClient() { Flux// .just(Locale.CHINA, Locale.FRANCE,
- * Locale.JAPANESE)// .delayElements(Duration.ofSeconds((long) (Math.random() * 30)))
- * .flatMap(this::sendMetadataLocaleUpdate)// .subscribe(); }
- */
