@@ -42,8 +42,9 @@ public class IntegrationApplication {
 	@Bean
 	MessageSource<String> arrayMessageSource() {
 		var names = new String[] { "Mia", "Michelle", "Mario", "Richard", "Tammie",
-				"Kimly", "Natalie", "Madhura", "Violetta", "Yuxin", "Olga", "Rob", "Jane",
-				"Artem", "Gary", "Mark", "Oleg", "Arun", "Heinz", "Venkat" };
+				"Kimly", "Natalie", "Madhura", "Violetta", "Zhen", "Justin", "Yuxin",
+				"Olga", "Rob", "Jane", "Artem", "Gary", "Mark", "Oleg", "Arun", "Heinz",
+				"Venkat" };
 		var ctr = new AtomicInteger();
 		return () -> {
 			var indx = ctr.getAndIncrement();

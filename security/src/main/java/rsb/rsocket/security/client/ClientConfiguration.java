@@ -21,12 +21,14 @@ import rsb.rsocket.security.GreetingResponse;
 @Configuration
 class ClientConfiguration {
 
+	// <1>
 	private final MimeType mimeType = MimeTypeUtils
 			.parseMimeType(WellKnownMimeType.MESSAGE_RSOCKET_AUTHENTICATION.getString());
 
 	private final UsernamePasswordMetadata credentials = new UsernamePasswordMetadata(
 			"jlong", "pw");
 
+	// <2>
 	@Bean
 	RSocketStrategiesCustomizer rSocketStrategiesCustomizer() {
 		return strategies -> strategies.encoder(new SimpleAuthenticationEncoder());
@@ -36,7 +38,7 @@ class ClientConfiguration {
 	RSocketRequester rSocketRequester(BootifulProperties properties,
 			RSocketRequester.Builder builder) {
 		return builder//
-				.setupMetadata(this.credentials, this.mimeType) // OPTIONAL!
+				.setupMetadata(this.credentials, this.mimeType) // <3>
 				.connectTcp(properties.getRsocket().getHostname(),
 						properties.getRsocket().getPort())
 				.block();
@@ -46,7 +48,7 @@ class ClientConfiguration {
 	ApplicationListener<ApplicationReadyEvent> ready(RSocketRequester greetings) {
 		return args -> greetings//
 				.route("greetings")//
-				.metadata(this.credentials, this.mimeType)//
+				.metadata(this.credentials, this.mimeType)// <4>
 				.data(Mono.empty())//
 				.retrieveFlux(GreetingResponse.class)//
 				.subscribe(gr -> log.info("secured response: " + gr.toString()));
