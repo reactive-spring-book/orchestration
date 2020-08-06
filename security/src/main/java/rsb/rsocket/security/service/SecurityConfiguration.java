@@ -14,15 +14,7 @@ import org.springframework.security.rsocket.core.PayloadSocketAcceptorIntercepto
 @Configuration
 class SecurityConfiguration {
 
-	@Bean
-	RSocketMessageHandler rSocketMessageHandler(RSocketStrategies strategies) {
-		var mh = new RSocketMessageHandler();
-		mh.getArgumentResolverConfigurer()
-				.addCustomResolver(new AuthenticationPrincipalArgumentResolver());
-		mh.setRSocketStrategies(strategies);
-		return mh;
-	}
-
+	// <1>
 	@Bean
 	MapReactiveUserDetailsService authentication() {
 		return new MapReactiveUserDetailsService(
@@ -32,9 +24,22 @@ class SecurityConfiguration {
 						.roles("USER").build());
 	}
 
+	// <2>
 	@Bean
 	PayloadSocketAcceptorInterceptor authorization(RSocketSecurity security) {
-		return security.simpleAuthentication(Customizer.withDefaults()).build();
+		return security//
+				.simpleAuthentication(Customizer.withDefaults())//
+				.build();
+	}
+
+	// <3>
+	@Bean
+	RSocketMessageHandler rSocketMessageHandler(RSocketStrategies strategies) {
+		var mh = new RSocketMessageHandler();
+		mh.getArgumentResolverConfigurer()
+				.addCustomResolver(new AuthenticationPrincipalArgumentResolver());
+		mh.setRSocketStrategies(strategies);
+		return mh;
 	}
 
 }

@@ -16,7 +16,7 @@ import java.util.stream.Stream;
 class GreetingsController {
 
 	@MessageMapping("greetings")
-	Flux<GreetingResponse> greet(@AuthenticationPrincipal Mono<UserDetails> user) {
+	Flux<GreetingResponse> greet(@AuthenticationPrincipal Mono<UserDetails> user) {// <1>
 		return user//
 				.map(UserDetails::getUsername)//
 				.map(GreetingRequest::new)//
