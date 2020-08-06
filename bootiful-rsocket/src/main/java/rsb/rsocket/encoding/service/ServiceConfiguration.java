@@ -12,7 +12,8 @@ import org.springframework.http.codec.json.Jackson2JsonEncoder;
 class ServiceConfiguration {
 
 	@Bean
-	@Order(Ordered.HIGHEST_PRECEDENCE) // <1>
+	@Order(Ordered.HIGHEST_PRECEDENCE)
+	// <1>
 	RSocketStrategiesCustomizer rSocketStrategiesCustomizer() {// <2>
 		return strategies -> strategies //
 				.decoder(new Jackson2JsonDecoder())// <3>

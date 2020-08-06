@@ -11,7 +11,6 @@ import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import rsb.rsocket.BootifulProperties;
-import rsb.rsocket.EncodingUtils;
 
 @Log4j2
 @Component

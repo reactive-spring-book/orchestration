@@ -17,13 +17,15 @@ import java.util.Map;
 @RequiredArgsConstructor
 class MetadataController {
 
-	@ConnectMapping // <1>
+	@ConnectMapping
+	// <1>
 	Mono<Void> setup(@Headers Map<String, Object> metadata) {
 		log.info("## setup");
 		return enumerate(metadata);
 	}
 
-	@MessageMapping("message") // <2>
+	@MessageMapping("message")
+	// <2>
 	Mono<Void> message(@Header(Constants.CLIENT_ID_HEADER) String clientId,
 			@Headers Map<String, Object> metadata) {
 		log.info("## message for " + Constants.CLIENT_ID_HEADER + ' ' + clientId);
