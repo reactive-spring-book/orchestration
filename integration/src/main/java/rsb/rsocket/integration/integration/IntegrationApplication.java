@@ -12,78 +12,71 @@ import org.springframework.integration.handler.GenericHandler;
 import org.springframework.integration.rsocket.ClientRSocketConnector;
 import org.springframework.integration.rsocket.RSocketInteractionModel;
 import org.springframework.integration.rsocket.dsl.RSockets;
-import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.rsocket.RSocketStrategies;
 import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.util.Assert;
 import rsb.rsocket.BootifulProperties;
 import rsb.rsocket.integration.GreetingRequest;
 import rsb.rsocket.integration.GreetingResponse;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Log4j2
 @SpringBootApplication
 public class IntegrationApplication {
 
-	@Bean
-	MessageChannel channel() {
-		return MessageChannels.flux().get();
-	}
+    @Bean
+    MessageChannel channel() {
+        return MessageChannels.flux().get();
+    }
 
-	@Bean
-	ClientRSocketConnector clientRSocketConnector(RSocketStrategies strategies,
-			BootifulProperties properties) {
-		ClientRSocketConnector clientRSocketConnector = new ClientRSocketConnector(
-				properties.getRsocket().getHostname(), properties.getRsocket().getPort());
-		clientRSocketConnector.setRSocketStrategies(strategies);
-		return clientRSocketConnector;
-	}
+    @Bean
+    ClientRSocketConnector clientRSocketConnector(RSocketStrategies strategies,
+                                                  BootifulProperties properties) {
+        ClientRSocketConnector clientRSocketConnector = new ClientRSocketConnector(
+                properties.getRsocket().getHostname(), properties.getRsocket().getPort());
+        clientRSocketConnector.setRSocketStrategies(strategies);
+        return clientRSocketConnector;
+    }
 
-	@Bean
-	IntegrationFlow greetingFlow(ClientRSocketConnector clientRSocketConnector) {
-		var names = new String[] { "Mario", "Richard", "Michelle", "Natalie", "Madhura",
-				"Violetta", "Yuxin", "Olga", "Rob", "Jane", "Artem", "Gary", "Mark",
-				"Oleg", "Arun", "Heinz", "Venkat" };
-		var messageSource = new MessageSource<String>() {
+    @Bean
+    MessageSource<String> arrayMessageSource() {
+        var names = new String[]{"Mia", "Michelle", "Mario", "Richard", "Tammie", "Kimly", "Natalie", "Madhura", "Violetta", "Yuxin", "Olga", "Rob", "Jane", "Artem", "Gary", "Mark", "Oleg", "Arun", "Heinz", "Venkat"};
+        var ctr = new AtomicInteger();
+        return () -> {
+            var indx = ctr.getAndIncrement();
+            if (indx < names.length) {
+                return MessageBuilder.withPayload(names[indx]).build();
+            } else {
+                return null;
+            }
+        };
+    }
 
-			@Override
-			public Message<String> receive() {
-				var index = (int) (Math.random() * names.length);
-				Assert.state(index <= (names.length - 1),
-						"the index is not within range");
-				return MessageBuilder.withPayload(names[index]).build();
-			}
-		};
-		return IntegrationFlows//
-				.from(messageSource, poller -> poller.poller(pm -> pm.fixedRate(1000)))//
-				.transform(String.class, GreetingRequest::new)//
-				.handle(RSockets//
-						.outboundGateway("greetings")//
-						.interactionModel(RSocketInteractionModel.requestStream)//
-						.expectedResponseType(GreetingResponse.class)//
-						.clientRSocketConnector(clientRSocketConnector)//
-				)//
-				.split()//
-				.channel(this.channel())//
-				.get();
-	}
+    @Bean
+    IntegrationFlow greetingFlow(ClientRSocketConnector clientRSocketConnector) {
+        return IntegrationFlows//
+                .from(arrayMessageSource(), poller -> poller.poller(pm -> pm.fixedRate(100)))//
+                .transform(String.class, GreetingRequest::new)//
+                .handle(RSockets//
+                        .outboundGateway("greetings")//
+                        .interactionModel(RSocketInteractionModel.requestStream)//
+                        .expectedResponseType(GreetingResponse.class)//
+                        .clientRSocketConnector(clientRSocketConnector)//
+                )//
+                .split()//
+                .channel(this.channel())
+                .handle((GenericHandler<GreetingResponse>) (payload, headers) -> {
+                    log.info("-----------------");
+                    log.info(payload.toString());
+                    headers.forEach((header, value) -> log.info(header + "=" + value));
+                    return null;
+                })//
+                .get();
+    }
 
-	@Bean
-	IntegrationFlow greetingsResponseFlow() {
-		return IntegrationFlows//
-				.from(this.channel())//
-				.handle((GenericHandler<GreetingResponse>) (payload, headers) -> {
-					log.info("-----------------");
-					log.info(payload.toString());
-					headers.forEach((header, value) -> log.info(header + "=" + value));
-					return null;
-				})//
-				.get();
-
-	}
-
-	public static void main(String[] a) {
-		SpringApplication.run(IntegrationApplication.class, a);
-	}
+    public static void main(String[] a) {
+        SpringApplication.run(IntegrationApplication.class, a);
+    }
 
 }
