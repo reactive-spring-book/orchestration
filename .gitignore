@@ -3,3 +3,7 @@
 .idea
 *iml
 target
+.settings
+.project
+.classpath
+.factorypath
