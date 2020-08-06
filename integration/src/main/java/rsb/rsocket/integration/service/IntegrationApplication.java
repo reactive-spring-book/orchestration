@@ -10,6 +10,7 @@ import rsb.rsocket.integration.GreetingRequest;
 import rsb.rsocket.integration.GreetingResponse;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.stream.Stream;
 
 @SpringBootApplication
@@ -30,8 +31,8 @@ class GreetingController {
 	@MessageMapping("greetings")
 	Flux<GreetingResponse> greet(GreetingRequest request) {
 		return Flux//
-				.fromStream(Stream.generate(
-						() -> new GreetingResponse("Hello, " + request.getName() + "!")))//
+				.fromStream(Stream.generate(() -> new GreetingResponse(
+						"Hello, " + request.getName() + "@ " + Instant.now() + "!")))//
 				.delayElements(Duration.ofSeconds(1));
 	}
 
