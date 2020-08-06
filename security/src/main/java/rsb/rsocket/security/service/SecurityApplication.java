@@ -27,55 +27,55 @@ import java.util.stream.Stream;
 @SpringBootApplication
 public class SecurityApplication {
 
-    public static void main(String args[]) {
-        System.setProperty("spring.profiles.active", "service");
-        SpringApplication.run(SecurityApplication.class, args);
-    }
+	public static void main(String args[]) {
+		System.setProperty("spring.profiles.active", "service");
+		SpringApplication.run(SecurityApplication.class, args);
+	}
+
 }
 
 @Configuration
 class SecurityConfiguration {
 
+	@Bean
+	RSocketMessageHandler rSocketMessageHandler(RSocketStrategies strategies) {
+		var mh = new RSocketMessageHandler();
+		mh.getArgumentResolverConfigurer()
+				.addCustomResolver(new AuthenticationPrincipalArgumentResolver());
+		mh.setRSocketStrategies(strategies);
+		return mh;
+	}
 
-    @Bean
-    RSocketMessageHandler rSocketMessageHandler(RSocketStrategies strategies) {
-        var mh = new RSocketMessageHandler();
-        mh.getArgumentResolverConfigurer().addCustomResolver(new AuthenticationPrincipalArgumentResolver());
-        mh.setRSocketStrategies(strategies);
-        return mh;
-    }
+	@Bean
+	MapReactiveUserDetailsService authentication() {
+		return new MapReactiveUserDetailsService(
+				User.withDefaultPasswordEncoder().username("rwinch").password("pw")
+						.roles("ADMIN", "USER").build(),
+				User.withDefaultPasswordEncoder().username("jlong").password("pw")
+						.roles("USER").build());
+	}
 
-    @Bean
-    MapReactiveUserDetailsService authentication() {
-        return new MapReactiveUserDetailsService(
-                User.withDefaultPasswordEncoder().username("rwinch").password("pw").roles("ADMIN", "USER").build(),
-                User.withDefaultPasswordEncoder().username("jlong").password("pw").roles("USER").build()
-        );
-    }
-
-    @Bean
-    PayloadSocketAcceptorInterceptor authorization(RSocketSecurity security) {
-        return security
-                .simpleAuthentication(Customizer.withDefaults())
-                .build();
-    }
+	@Bean
+	PayloadSocketAcceptorInterceptor authorization(RSocketSecurity security) {
+		return security.simpleAuthentication(Customizer.withDefaults()).build();
+	}
 
 }
 
 @Controller
 class GreetingsController {
 
-    @MessageMapping("greetings")
-    Flux<GreetingResponse> greet(@AuthenticationPrincipal Mono<UserDetails> user) {
-        return user
-                .map(UserDetails::getUsername)
-                .map(GreetingRequest::new)
-                .flatMapMany(this::greet);
-    }
+	@MessageMapping("greetings")
+	Flux<GreetingResponse> greet(@AuthenticationPrincipal Mono<UserDetails> user) {
+		return user.map(UserDetails::getUsername).map(GreetingRequest::new)
+				.flatMapMany(this::greet);
+	}
 
-    private Flux<GreetingResponse> greet(GreetingRequest request) {
-        return Flux
-                .fromStream(Stream.generate(() -> new GreetingResponse("Hello, " + request.getName() + "!")))
-                .delayElements(Duration.ofSeconds(1));
-    }
+	private Flux<GreetingResponse> greet(GreetingRequest request) {
+		return Flux
+				.fromStream(Stream.generate(
+						() -> new GreetingResponse("Hello, " + request.getName() + "!")))
+				.delayElements(Duration.ofSeconds(1));
+	}
+
 }

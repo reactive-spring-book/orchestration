@@ -8,5 +8,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class GreetingResponse {
-    private String message;
+
+	private String message;
+
 }

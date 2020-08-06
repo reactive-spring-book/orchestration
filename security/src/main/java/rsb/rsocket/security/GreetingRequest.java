@@ -9,5 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class GreetingRequest {
 
-    private String name;
+	private String name;
+
 }

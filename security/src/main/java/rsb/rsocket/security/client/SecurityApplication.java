@@ -22,38 +22,44 @@ import rsb.rsocket.security.GreetingResponse;
 @SpringBootApplication
 public class SecurityApplication {
 
-    private final MimeType mimeType = MimeTypeUtils.parseMimeType(WellKnownMimeType.MESSAGE_RSOCKET_AUTHENTICATION.getString());
-    private final UsernamePasswordMetadata credentials = new UsernamePasswordMetadata("jlong", "pw");
+	private final MimeType mimeType = MimeTypeUtils
+			.parseMimeType(WellKnownMimeType.MESSAGE_RSOCKET_AUTHENTICATION.getString());
 
-    @Bean
-    RSocketStrategiesCustomizer rSocketStrategiesCustomizer() {
-        return strategies -> strategies.encoder(new SimpleAuthenticationEncoder());
-    }
+	private final UsernamePasswordMetadata credentials = new UsernamePasswordMetadata(
+			"jlong", "pw");
 
-    @Bean
-    RSocketRequester rSocketRequester(BootifulProperties properties ,
-                                      RSocketRequester.Builder builder) {
-        return builder
-                .setupMetadata(this.credentials, this.mimeType) //you do NOT need this! OPTIONAL! only interesting if ur connetion is multitenant
-                .connectTcp( properties.getRsocket() .getHostname() ,  properties.getRsocket().getPort())
-                .block();
-    }
+	@Bean
+	RSocketStrategiesCustomizer rSocketStrategiesCustomizer() {
+		return strategies -> strategies.encoder(new SimpleAuthenticationEncoder());
+	}
 
-    @Bean
-    ApplicationListener<ApplicationReadyEvent> ready(RSocketRequester greetings ) {
-        return args -> {
-            greetings
-                    .route("greetings")
-                    .metadata(this.credentials, this.mimeType)
-                    .data(Mono.empty())
-                    .retrieveFlux(GreetingResponse.class)
-                    .subscribe(gr -> log.info("secured response: " + gr.toString()));
-        };
-    }
+	@Bean
+	RSocketRequester rSocketRequester(BootifulProperties properties,
+			RSocketRequester.Builder builder) {
+		return builder.setupMetadata(this.credentials, this.mimeType) // you do NOT need
+																		// this! OPTIONAL!
+																		// only
+																		// interesting if
+																		// ur connetion is
+																		// multitenant
+				.connectTcp(properties.getRsocket().getHostname(),
+						properties.getRsocket().getPort())
+				.block();
+	}
 
-    @SneakyThrows
-    public static void main(String args[]) {
-        SpringApplication.run(SecurityApplication.class, args);
-        System.in.read();
-    }
+	@Bean
+	ApplicationListener<ApplicationReadyEvent> ready(RSocketRequester greetings) {
+		return args -> {
+			greetings.route("greetings").metadata(this.credentials, this.mimeType)
+					.data(Mono.empty()).retrieveFlux(GreetingResponse.class)
+					.subscribe(gr -> log.info("secured response: " + gr.toString()));
+		};
+	}
+
+	@SneakyThrows
+	public static void main(String args[]) {
+		SpringApplication.run(SecurityApplication.class, args);
+		System.in.read();
+	}
+
 }
