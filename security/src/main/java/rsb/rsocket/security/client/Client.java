@@ -43,7 +43,8 @@ class Client {
 
 	@Bean
 	ApplicationListener<ApplicationReadyEvent> ready(RSocketRequester greetings) {
-		return args -> greetings.route("greetings")//
+		return args -> greetings//
+				.route("greetings")//
 				.metadata(this.credentials, this.mimeType)//
 				.data(Mono.empty())//
 				.retrieveFlux(GreetingResponse.class)//
