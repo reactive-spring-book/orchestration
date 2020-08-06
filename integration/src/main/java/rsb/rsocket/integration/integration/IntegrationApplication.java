@@ -48,13 +48,10 @@ public class IntegrationApplication {
 
 			@Override
 			public Message<String> receive() {
-				var len = names.length;
-				var rand = Math.random() * len;
-				var index = (int) rand;
+				var index = (int) (Math.random() * names.length);
 				Assert.state(index <= (names.length - 1),
 						"the index is not within range");
-				var name = names[index];
-				return MessageBuilder.withPayload(name).build();
+				return MessageBuilder.withPayload(names[index]).build();
 			}
 		};
 		return IntegrationFlows//

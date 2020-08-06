@@ -33,7 +33,7 @@ class GreetingController {
 		return Flux//
 				.fromStream(Stream.generate(() -> new GreetingResponse(
 						"Hello, " + request.getName() + "@ " + Instant.now() + "!")))//
-				.delayElements(Duration.ofSeconds(1));
+				.delayElements(Duration.ofSeconds(1)).take(100);
 	}
 
 }
