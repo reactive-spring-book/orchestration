@@ -13,6 +13,7 @@
     </parent>
     <modules>
         <module>raw-rsocket</module>
+        <module>security </module>
         <module>bootiful-rsocket</module>
         <module>common</module>
     </modules>
