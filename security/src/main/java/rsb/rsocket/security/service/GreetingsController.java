@@ -17,7 +17,9 @@ class GreetingsController {
 
 	@MessageMapping("greetings")
 	Flux<GreetingResponse> greet(@AuthenticationPrincipal Mono<UserDetails> user) {
-		return user.map(UserDetails::getUsername).map(GreetingRequest::new)
+		return user//
+				.map(UserDetails::getUsername)//
+				.map(GreetingRequest::new)//
 				.flatMapMany(this::greet);
 	}
 
