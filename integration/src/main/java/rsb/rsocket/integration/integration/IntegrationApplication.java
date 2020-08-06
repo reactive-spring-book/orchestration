@@ -66,7 +66,8 @@ public class IntegrationApplication {
 						.expectedResponseType(GreetingResponse.class)//
 						.clientRSocketConnector(clientRSocketConnector)//
 				)//
-				.split().channel(this.channel())//
+				.split()//
+				.channel(this.channel())//
 				.get();
 	}
 
