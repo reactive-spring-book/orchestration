@@ -6,7 +6,6 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
-import reactor.core.scheduler.Schedulers;
 import rsb.rsocket.BootifulProperties;
 import rsb.rsocket.EncodingUtils;
 import rsb.rsocket.bidirectional.GreetingResponse;
@@ -37,7 +36,7 @@ class ClientLauncher implements ApplicationListener<ApplicationReadyEvent> {
 						port))// <3>
 				.flatMap(client -> Flux.just(client)
 						.delayElements(Duration.ofSeconds((long) (30 * Math.random()))))// <4>
-				.flatMap(Client::start)// <5>
+				.flatMap(Client::getGreetings)// <5>
 				.map(GreetingResponse::toString).subscribe(log::info);
 	}
 

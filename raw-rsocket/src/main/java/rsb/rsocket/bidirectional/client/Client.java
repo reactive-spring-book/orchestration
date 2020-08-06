@@ -3,13 +3,12 @@ package rsb.rsocket.bidirectional.client;
 import io.rsocket.*;
 import io.rsocket.transport.netty.client.TcpClientTransport;
 import io.rsocket.util.DefaultPayload;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.Lifecycle;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import rsb.rsocket.EncodingUtils;
 import rsb.rsocket.bidirectional.ClientHealthState;
-import rsb.rsocket.bidirectional.Constants;
 import rsb.rsocket.bidirectional.GreetingRequest;
 import rsb.rsocket.bidirectional.GreetingResponse;
 
@@ -20,8 +19,10 @@ import java.util.stream.Stream;
 import static rsb.rsocket.bidirectional.ClientHealthState.STARTED;
 import static rsb.rsocket.bidirectional.ClientHealthState.STOPPED;
 
+// <1>
+@RequiredArgsConstructor
 @Slf4j
-class Client implements SocketAcceptor, Constants/* , Lifecycle */ {
+class Client implements SocketAcceptor {
 
 	private final EncodingUtils encodingUtils;
 
@@ -31,16 +32,7 @@ class Client implements SocketAcceptor, Constants/* , Lifecycle */ {
 
 	private final int servicePort;
 
-	// <1>
-	Client(EncodingUtils utils, String uuid, String svcHost, int svcPort) {
-		this.uid = uuid;
-		this.encodingUtils = utils;
-		this.serviceHostname = svcHost;
-		this.servicePort = svcPort;
-	}
-
-	Flux<GreetingResponse> start() {
-		log.info("launching " + this.uid + " @ " + new Date().toString());
+	Flux<GreetingResponse> getGreetings() {
 		var greetingRequestPayload = this.encodingUtils
 				.encode(new GreetingRequest("Client #" + this.uid));
 		return RSocketFactory//

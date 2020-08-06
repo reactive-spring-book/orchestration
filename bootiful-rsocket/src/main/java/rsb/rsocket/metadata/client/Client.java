@@ -22,18 +22,20 @@ class Client implements ApplicationListener<ApplicationReadyEvent> {
 	@Override
 	public void onApplicationEvent(ApplicationReadyEvent event) {
 
-		Mono<Void> one = this.rSocketRequester//
-				.route("message")
-				.metadata(UUID.randomUUID().toString(), Constants.CLIENT_ID)// <1>
-				.metadata(Locale.JAPANESE.getLanguage(), Constants.LANG)// <2>
+		Mono<Void> one = this.rSocketRequester// <1>
+				.route("message")//
+				.metadata(UUID.randomUUID().toString(), Constants.CLIENT_ID)//
+				.metadata(Locale.CHINESE.getLanguage(), Constants.LANG)//
 				.send();
 
-		Mono<Void> two = this.rSocketRequester//
-				.route("message").metadata(metadataSpec -> {
+		Mono<Void> two = this.rSocketRequester// <2>
+				.route("message")//
+				.metadata(metadataSpec -> {
 					metadataSpec.metadata(UUID.randomUUID().toString(),
-							Constants.CLIENT_ID);
-					metadataSpec.metadata(Locale.JAPANESE.getLanguage(), Constants.LANG);
-				}).send();
+							Constants.CLIENT_ID);//
+					metadataSpec.metadata(Locale.JAPANESE.getLanguage(), Constants.LANG);//
+				})//
+				.send();
 
 		one.then(two).subscribe();
 	}

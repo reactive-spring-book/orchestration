@@ -16,8 +16,12 @@ class Client implements ApplicationListener<ApplicationReadyEvent> {
 
 	@Override
 	public void onApplicationEvent(ApplicationReadyEvent event) {
-		this.rSocketRequester.route("greetings").data("Spring Fans")
-				.retrieveFlux(String.class).doOnError(log::error).subscribe(log::info);
+		this.rSocketRequester//
+				.route("greetings")//
+				.data("Spring Fans")//
+				.retrieveFlux(String.class)//
+				.doOnError(log::error)//
+				.subscribe(log::info);
 	}
 
 }

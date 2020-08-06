@@ -19,7 +19,7 @@ class ErrorController {
 		return Flux//
 				.fromStream(Stream.generate(() -> "hello " + name + "!"))//
 				.flatMap(message -> {
-					if (Math.random() > .5) {
+					if (Math.random() >= .5) {
 						return Mono.error(new IllegalArgumentException("Ooops!"));
 					} //
 					else {

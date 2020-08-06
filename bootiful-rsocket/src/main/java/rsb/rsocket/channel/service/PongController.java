@@ -12,7 +12,7 @@ class PongController {
 
 	@MessageMapping("pong")
 	Flux<String> pong(@Payload Flux<String> ping) {
-		return ping.map(PingPongApplication::reply).doOnNext(log::info);
+		return ping.map(request -> "pong").doOnNext(log::info);
 	}
 
 }

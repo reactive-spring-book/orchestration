@@ -30,7 +30,7 @@ class ClientLauncher implements ApplicationListener<ApplicationReadyEvent> {
 				.map(id -> new Client(this.rSocketRequester, Long.toString(id)))//
 				.flatMap(client -> Flux.just(client)
 						.delayElements(Duration.ofSeconds((long) (30 * Math.random()))))//
-				.flatMap(Client::start)// <5>
+				.flatMap(Client::getGreetings)// <5>
 				.subscribeOn(Schedulers.elastic())// <6>
 				.map(GreetingResponse::toString).subscribe(log::info);
 	}

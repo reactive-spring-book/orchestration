@@ -13,14 +13,11 @@ import reactor.core.publisher.Mono;
 import rsb.rsocket.BootifulProperties;
 import rsb.rsocket.EncodingUtils;
 import rsb.rsocket.bidirectional.ClientHealthState;
-import rsb.rsocket.bidirectional.Constants;
 import rsb.rsocket.bidirectional.GreetingRequest;
 import rsb.rsocket.bidirectional.GreetingResponse;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import static rsb.rsocket.bidirectional.ClientHealthState.STOPPED;
@@ -28,10 +25,7 @@ import static rsb.rsocket.bidirectional.ClientHealthState.STOPPED;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-class Service
-		implements ApplicationListener<ApplicationReadyEvent>, SocketAcceptor, Constants {
-
-	private final Map<String, RSocket> clients = new ConcurrentHashMap<>();
+class Service implements ApplicationListener<ApplicationReadyEvent>, SocketAcceptor {
 
 	private final BootifulProperties properties;
 

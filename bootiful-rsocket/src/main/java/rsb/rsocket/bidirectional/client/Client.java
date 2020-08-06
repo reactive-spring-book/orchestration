@@ -15,7 +15,7 @@ class Client {
 
 	private final String uid;
 
-	Flux<GreetingResponse> start() {
+	Flux<GreetingResponse> getGreetings() { //
 		return this.rSocketRequester//
 				.route("greetings")//
 				.data(new GreetingRequest("Client #" + this.uid))//
