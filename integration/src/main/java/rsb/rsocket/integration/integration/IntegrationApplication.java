@@ -47,12 +47,8 @@ public class IntegrationApplication {
 		var ctr = new AtomicInteger();
 		return () -> {
 			var indx = ctr.getAndIncrement();
-			if (indx < names.length) {
-				return MessageBuilder.withPayload(names[indx]).build();
-			}
-			else {
-				return null;
-			}
+			return (indx < names.length) ? MessageBuilder.withPayload(names[indx]).build()
+					: null;
 		};
 	}
 
