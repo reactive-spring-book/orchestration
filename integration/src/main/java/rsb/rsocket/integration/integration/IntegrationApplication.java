@@ -28,7 +28,7 @@ public class IntegrationApplication {
 
 	@Bean
 	ClientRSocketConnector clientRSocketConnector(RSocketStrategies strategies,
-			BootifulProperties properties) {
+			BootifulProperties properties) {// <1>
 		ClientRSocketConnector clientRSocketConnector = new ClientRSocketConnector(
 				properties.getRsocket().getHostname(), properties.getRsocket().getPort());
 		clientRSocketConnector.setRSocketStrategies(strategies);
@@ -38,23 +38,25 @@ public class IntegrationApplication {
 	@Bean
 	IntegrationFlow greetingFlow(@Value("${user.home}") File home,
 			ClientRSocketConnector clientRSocketConnector) {
-		var inboundFileAdapter = Files//
+
+		var inboundFileAdapter = Files// <2>
 				.inboundAdapter(new File(home, "in"))//
 				.autoCreateDirectory(true);
+
 		return IntegrationFlows//
 				.from(inboundFileAdapter,
-						poller -> poller.poller(pm -> pm.fixedRate(100)))//
-				.transform(new FileToStringTransformer())//
-				.transform(String.class, GreetingRequest::new)//
+						poller -> poller.poller(pm -> pm.fixedRate(100)))// <3>
+				.transform(new FileToStringTransformer())// <4>
+				.transform(String.class, GreetingRequest::new)// <5>
 				.handle(RSockets//
 						.outboundGateway("greetings")//
 						.interactionModel(RSocketInteractionModel.requestStream)//
 						.expectedResponseType(GreetingResponse.class)//
 						.clientRSocketConnector(clientRSocketConnector)//
 				)//
-				.split()//
-				.channel(this.channel())
-				.handle((GenericHandler<GreetingResponse>) (payload, headers) -> {
+				.split()// <7>
+				.channel(this.channel()) // <8>
+				.handle((GenericHandler<GreetingResponse>) (payload, headers) -> {// <9>
 					log.info("-----------------");
 					log.info(payload.toString());
 					headers.forEach((header, value) -> log.info(header + "=" + value));
@@ -65,11 +67,11 @@ public class IntegrationApplication {
 
 	@Bean
 	MessageChannel channel() {
-		return MessageChannels.flux().get();
+		return MessageChannels.flux().get();// <10>
 	}
 
-	public static void main(String[] a) {
-		SpringApplication.run(IntegrationApplication.class, a);
+	public static void main(String[] args) {
+		SpringApplication.run(IntegrationApplication.class, args);
 	}
 
 }
