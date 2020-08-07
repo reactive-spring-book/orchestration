@@ -27,11 +27,6 @@ import java.io.File;
 public class IntegrationApplication {
 
 	@Bean
-	MessageChannel channel() {
-		return MessageChannels.flux().get();
-	}
-
-	@Bean
 	ClientRSocketConnector clientRSocketConnector(RSocketStrategies strategies,
 			BootifulProperties properties) {
 		ClientRSocketConnector clientRSocketConnector = new ClientRSocketConnector(
@@ -66,6 +61,11 @@ public class IntegrationApplication {
 					return null;
 				})//
 				.get();
+	}
+
+	@Bean
+	MessageChannel channel() {
+		return MessageChannels.flux().get();
 	}
 
 	public static void main(String[] a) {
