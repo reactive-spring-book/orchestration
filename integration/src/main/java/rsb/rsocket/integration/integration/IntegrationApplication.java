@@ -9,6 +9,7 @@ import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.integration.dsl.MessageChannels;
 import org.springframework.integration.file.dsl.Files;
+import org.springframework.integration.file.transformer.FileToStringTransformer;
 import org.springframework.integration.handler.GenericHandler;
 import org.springframework.integration.rsocket.ClientRSocketConnector;
 import org.springframework.integration.rsocket.RSocketInteractionModel;
@@ -42,11 +43,13 @@ public class IntegrationApplication {
 	@Bean
 	IntegrationFlow greetingFlow(@Value("${user.home}") File home,
 			ClientRSocketConnector clientRSocketConnector) {
-		var inboundFileAdapter = Files.inboundAdapter(new File(home, "in"))
+		var inboundFileAdapter = Files//
+				.inboundAdapter(new File(home, "in"))//
 				.autoCreateDirectory(true);
 		return IntegrationFlows//
 				.from(inboundFileAdapter,
 						poller -> poller.poller(pm -> pm.fixedRate(100)))//
+				.transform(new FileToStringTransformer())//
 				.transform(String.class, GreetingRequest::new)//
 				.handle(RSockets//
 						.outboundGateway("greetings")//
