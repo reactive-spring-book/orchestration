@@ -46,7 +46,7 @@ class Pong implements SocketAcceptor, ApplicationListener<ApplicationReadyEvent>
 						.map(Payload::getDataUtf8) //
 						.doOnNext(
 								str -> log.info("received " + str + " in " + getClass())) //
-						.map(request -> "pong") //
+						.map(request -> "pong") // <2>
 						.map(DefaultPayload::create);
 			}
 		};

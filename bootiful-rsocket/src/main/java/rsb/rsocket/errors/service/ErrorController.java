@@ -15,7 +15,7 @@ import java.util.stream.Stream;
 class ErrorController {
 
 	@MessageMapping("greetings")
-	Flux<String> greet(String name) {
+	Flux<String> greet(String name) {// <1>
 		return Flux//
 				.fromStream(Stream.generate(() -> "hello " + name + "!"))//
 				.flatMap(message -> {
@@ -29,7 +29,7 @@ class ErrorController {
 				.delayElements(Duration.ofSeconds(1));
 	}
 
-	@MessageExceptionHandler
+	@MessageExceptionHandler // <2>
 	void exception(Exception exception) {
 		log.error("the exception is " + exception.getMessage());
 	}

@@ -49,7 +49,7 @@ public class IntegrationApplication {
 				.transform(new FileToStringTransformer())// <4>
 				.transform(String.class, GreetingRequest::new)// <5>
 				.handle(RSockets//
-						.outboundGateway("greetings")//
+						.outboundGateway("greetings")// <6>
 						.interactionModel(RSocketInteractionModel.requestStream)//
 						.expectedResponseType(GreetingResponse.class)//
 						.clientRSocketConnector(clientRSocketConnector)//

@@ -37,7 +37,8 @@ class ClientLauncher implements ApplicationListener<ApplicationReadyEvent> {
 				.flatMap(client -> Flux.just(client)
 						.delayElements(Duration.ofSeconds((long) (30 * Math.random()))))// <4>
 				.flatMap(Client::getGreetings)// <5>
-				.map(GreetingResponse::toString).subscribe(log::info);
+				.map(GreetingResponse::toString)// <6>
+				.subscribe(log::info);
 	}
 
 }
