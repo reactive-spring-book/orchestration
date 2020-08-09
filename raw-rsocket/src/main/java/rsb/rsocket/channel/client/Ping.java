@@ -33,7 +33,7 @@ class Ping implements ApplicationListener<ApplicationReadyEvent> {
 						this.properties.getRsocket().getHostname(),
 						this.properties.getRsocket().getPort()))//
 				.start()//
-				.flatMapMany(socket -> socket//
+				.flatMapMany(socket -> socket// <2>
 						.requestChannel(ping)//
 						.map(Payload::getDataUtf8)//
 						.doOnNext(str -> log
