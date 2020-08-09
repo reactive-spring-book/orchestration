@@ -32,7 +32,8 @@ class Ping implements ApplicationListener<ApplicationReadyEvent> {
 				.transport(TcpClientTransport.create(
 						this.properties.getRsocket().getHostname(),
 						this.properties.getRsocket().getPort()))//
-				.start().flatMapMany(socket -> socket//
+				.start()//
+				.flatMapMany(socket -> socket//
 						.requestChannel(ping)//
 						.map(Payload::getDataUtf8)//
 						.doOnNext(str -> log

@@ -7,14 +7,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
-import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 import rsb.rsocket.BootifulProperties;
 
 @Log4j2
 @Component
 @RequiredArgsConstructor
-class Client implements ApplicationListener<ApplicationReadyEvent>, Ordered {
+class Client implements ApplicationListener<ApplicationReadyEvent> {
 
 	private final BootifulProperties properties;
 
@@ -30,11 +29,6 @@ class Client implements ApplicationListener<ApplicationReadyEvent>, Ordered {
 				.flatMapMany(socket -> socket
 						.fireAndForget(DefaultPayload.create("Reactive Spring")))// <1>
 				.subscribe(log::info);
-	}
-
-	@Override
-	public int getOrder() {
-		return Ordered.LOWEST_PRECEDENCE;
 	}
 
 }
