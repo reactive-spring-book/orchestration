@@ -12,8 +12,8 @@
         <relativePath/>
     </parent>
     <modules>
-        <module>customer-service</module>
         <module>order-service</module>
+        <module>customer-service</module>
         <module>client</module>
         <module>eureka-service</module>
     </modules>

@@ -59,6 +59,7 @@ class CustomerRestController {
 				})))//
 				.orElse(from(customerStream));
 	}
+
 }
 
 @Data
