@@ -12,18 +12,15 @@
         <relativePath/>
     </parent>
     <modules>
-
-        <module>  customer-service  </module>
-        <module>  order-service     </module>
-        <module>  client            </module>
-        <module>  eureka-service            </module>
-
+        <module>customer-service</module>
+        <module>order-service</module>
+        <module>client</module>
+        <module>eureka-service</module>
     </modules>
     <dependencies>
-        
         <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-webflux</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -34,12 +31,20 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.junit.vintage</groupId>
+                    <artifactId>junit-vintage-engine</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-test</artifactId>
             <scope>test</scope>
         </dependency>
+
+
     </dependencies>
 
     <build>
