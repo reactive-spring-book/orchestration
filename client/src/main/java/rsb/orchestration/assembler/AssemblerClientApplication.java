@@ -2,6 +2,7 @@ package rsb.orchestration.assembler;
 
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -34,33 +35,37 @@ public class AssemblerClientApplication {
 
 }
 
+@Log4j2
 @Component
 @RequiredArgsConstructor
 class Listener {
 
 	private final WebClient http;
 
+	private <T> Flux<T> ensureCached(Flux<T> in) {
+		return in.doOnNext(c -> log.info("receiving " + c.toString())).cache();
+	}
+
 	@EventListener(ApplicationReadyEvent.class)
 	public void begin() {
 		Integer[] ids = new Integer[] { 1, 7, 2 };
-		Flux<Customer> customerFlux = getCustomers(ids).cache();
-		Flux<Order> ordersFlux = getOrders(ids).cache();
+		Flux<Customer> customerFlux = ensureCached(getCustomers(ids));
+		Flux<Order> ordersFlux = ensureCached(getOrders(ids));
 		Flux<CustomerOrders> customerOrdersFlux = customerFlux//
-                .flatMap(customer -> {
-			Mono<List<Order>> collectList = ordersFlux
-					.filter(o -> o.getCustomerId().equals(customer.getId()))
-					.collectList();
-			return Flux.zip(Mono.just(customer), collectList);
-		})//
-                .map(tuple -> new CustomerOrders(tuple.getT1(), tuple.getT2()));
+				.flatMap(customer -> {
+					Mono<List<Order>> collectList = ordersFlux
+							.filter(o -> o.getCustomerId().equals(customer.getId()))
+							.collectList();
+					return Flux.zip(Mono.just(customer), collectList);
+				})//
+				.map(tuple -> new CustomerOrders(tuple.getT1(), tuple.getT2()));
 
-		customerOrdersFlux
-                .subscribe(tuple -> System.out
-				.println(tuple.getCustomer().toString() + "=" + tuple.getOrders()));
-	}
-
-	Flux<Order> find(Customer c, Flux<Order> orders) {
-		return orders.filter(o -> o.getCustomerId().equals(c.getId()));
+		customerOrdersFlux.subscribe(customerOrder -> {
+			log.info("---------------");
+			log.info(customerOrder.getCustomer().toString());
+			customerOrder.getOrders().forEach(
+					order -> log.info(customerOrder.getCustomer().getId() + ":" + order));
+		});
 	}
 
 	private Flux<Order> getOrders(Integer[] ids) {
