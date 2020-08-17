@@ -45,20 +45,18 @@ class Listener {
 		Integer[] ids = new Integer[] { 1, 7, 2 };
 		Flux<Customer> customerFlux = getCustomers(ids).cache();
 		Flux<Order> ordersFlux = getOrders(ids).cache();
-		Flux<CustomerOrders> customerOrdersFlux = customerFlux.flatMap(customer -> {
+		Flux<CustomerOrders> customerOrdersFlux = customerFlux//
+                .flatMap(customer -> {
 			Mono<List<Order>> collectList = ordersFlux
 					.filter(o -> o.getCustomerId().equals(customer.getId()))
 					.collectList();
 			return Flux.zip(Mono.just(customer), collectList);
-		}).map(tuple -> new CustomerOrders(tuple.getT1(), tuple.getT2()));
+		})//
+                .map(tuple -> new CustomerOrders(tuple.getT1(), tuple.getT2()));
 
-		customerOrdersFlux.subscribe(tuple -> System.out
+		customerOrdersFlux
+                .subscribe(tuple -> System.out
 				.println(tuple.getCustomer().toString() + "=" + tuple.getOrders()));
-
-		// regular
-		// .publishOn(scheduler)
-		// .subscribeOn(scheduler)
-		// .subscribe(System.out::println);
 	}
 
 	Flux<Order> find(Customer c, Flux<Order> orders) {
