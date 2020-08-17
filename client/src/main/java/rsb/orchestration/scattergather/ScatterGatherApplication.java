@@ -14,15 +14,17 @@ import rsb.orchestration.Customer;
 import rsb.orchestration.Order;
 import rsb.orchestration.Profile;
 
-import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * This makes use of several interesting qualities:
  *
- * - zip() makes it easy to process related calls as peers - s-c-loadbalancer (and
- * caffeine for caching) work well with Reactive - s-c-discovery-client makes it to do
- * client-side loadbalancing - shows one-to-one, one-to-many resolution -
+ * <ol>
+ * <li>zip() makes it easy to process related calls as peers</li>
+ * <li>s-c-loadbalancer (and caffeine for caching) work well with Reactive</li>
+ * <li>s-c-discovery-client makes it to do client-side loadbalancing - shows one-to-one,
+ * one-to-many resolution</li>
+ * </ol>
  */
 @Log4j2
 @SpringBootApplication
