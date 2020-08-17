@@ -22,10 +22,9 @@ import java.util.Map;
 
 /**
  * Make sure to start `eureka-service` and at least three instances of `customer-service`
- *
+ * <p>
  * TODO: introduce some delay in the `customer-service` to simulate the benefits of
  * hedging
- *
  */
 @Log4j2
 @SpringBootApplication
@@ -48,8 +47,8 @@ public class HedgingApplication {
 	}
 
 	@Bean
-	WebClient client(HedgeExchangeFilterFunction eff) {
-		return WebClient.builder().filter(eff).build();
+	WebClient client(WebClient.Builder builder, HedgeExchangeFilterFunction eff) {
+		return builder.filter(eff).build();
 	}
 
 	public static void main(String[] args) {
