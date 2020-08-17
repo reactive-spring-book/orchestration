@@ -44,7 +44,7 @@ class Listener {
 
 	@EventListener(ApplicationReadyEvent.class)
 	public void begin() {
-		Integer[] ids = new Integer[] { 1, 2, 7 };
+		Integer[] ids = { 1, 2, 7 };
 		Flux<Customer> customerFlux = ensureCached(getCustomers(ids));
 		Flux<Order> ordersFlux = ensureCached(getOrders(ids));
 		Flux<CustomerOrders> customerOrdersFlux = customerFlux//
@@ -93,19 +93,5 @@ class CustomerOrders {
 	private final Customer customer;
 
 	private final Collection<Order> orders;
-
-	// private final Collection<Order> orders;
-
-}
-
-@Data
-@RequiredArgsConstructor
-class ReactiveCustomerOrders {
-
-	private final Customer customer;
-
-	private final Flux<Order> orders;
-
-	// private final Collection<Order> orders;
 
 }
