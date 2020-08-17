@@ -14,6 +14,7 @@ import rsb.orchestration.Order;
 import rsb.orchestration.Profile;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Log4j2
 @SpringBootApplication
@@ -31,7 +32,7 @@ public class ScatterGatherApplication {
 	@Bean
 	ApplicationListener<ApplicationReadyEvent> scatterGatherClient(CrmClient client) {
 		return event -> {
-			Integer[] ids = { 1, 2, 7 };
+			Integer[] ids = { 1, 2, 7, 5 };
 			Flux<Customer> customerFlux = ensureCached(client.getCustomers(ids));
 			Flux<Order> ordersFlux = ensureCached(client.getOrders(ids));
 			Flux<CustomerOrders> customerOrdersFlux = customerFlux//
@@ -45,8 +46,12 @@ public class ScatterGatherApplication {
 					})//
 					.map(tuple -> new CustomerOrders(tuple.getT1(), tuple.getT2(),
 							tuple.getT3()));
-			customerOrdersFlux.doOnSubscribe(sub -> log.info("starting..."))
-					.doOnComplete(() -> log.info("stopping ..."))
+
+			var start = new AtomicLong();
+			customerOrdersFlux//
+					.doOnSubscribe(sub -> start.set(System.currentTimeMillis()))//
+					.doOnComplete(() -> log.info("request duration: "
+							+ (System.currentTimeMillis() - start.get())))//
 					.subscribe(customerOrder -> {
 						log.info("---------------");
 						log.info(customerOrder.getCustomer().toString());
