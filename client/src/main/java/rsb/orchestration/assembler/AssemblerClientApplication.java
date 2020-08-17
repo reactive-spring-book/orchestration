@@ -42,13 +42,9 @@ class Listener {
 
 	private final WebClient http;
 
-	private <T> Flux<T> ensureCached(Flux<T> in) {
-		return in.doOnNext(c -> log.info("receiving " + c.toString())).cache();
-	}
-
 	@EventListener(ApplicationReadyEvent.class)
 	public void begin() {
-		Integer[] ids = new Integer[] { 1, 7, 2 };
+		Integer[] ids = new Integer[] { 1, 2, 7 };
 		Flux<Customer> customerFlux = ensureCached(getCustomers(ids));
 		Flux<Order> ordersFlux = ensureCached(getOrders(ids));
 		Flux<CustomerOrders> customerOrdersFlux = customerFlux//
@@ -63,9 +59,13 @@ class Listener {
 		customerOrdersFlux.subscribe(customerOrder -> {
 			log.info("---------------");
 			log.info(customerOrder.getCustomer().toString());
-			customerOrder.getOrders().forEach(
-					order -> log.info(customerOrder.getCustomer().getId() + ":" + order));
+			customerOrder.getOrders().forEach(order -> log
+					.info(customerOrder.getCustomer().getId() + ": " + order));
 		});
+	}
+
+	private <T> Flux<T> ensureCached(Flux<T> in) {
+		return in.doOnNext(c -> log.debug("receiving " + c.toString())).cache();
 	}
 
 	private Flux<Order> getOrders(Integer[] ids) {
