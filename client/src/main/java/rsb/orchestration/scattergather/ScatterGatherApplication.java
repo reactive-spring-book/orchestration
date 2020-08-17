@@ -36,12 +36,12 @@ public class ScatterGatherApplication {
 			Flux<Order> ordersFlux = ensureCached(client.getOrders(ids));
 			Flux<CustomerOrders> customerOrdersFlux = customerFlux//
 					.flatMap(customer -> {
-						Mono<List<Order>> listOfOrders = ordersFlux
+						Mono<List<Order>> listOfOrdersMono = ordersFlux
 								.filter(o -> o.getCustomerId().equals(customer.getId()))
 								.collectList();
 						Mono<Profile> profileMono = client.getProfile(customer.getId());
 						Mono<Customer> customerMono = Mono.just(customer);
-						return Flux.zip(customerMono, listOfOrders, profileMono);
+						return Flux.zip(customerMono, listOfOrdersMono, profileMono);
 					})//
 					.map(tuple -> new CustomerOrders(tuple.getT1(), tuple.getT2(),
 							tuple.getT3()));
