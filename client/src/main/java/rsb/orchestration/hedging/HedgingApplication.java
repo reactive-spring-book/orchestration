@@ -26,12 +26,12 @@ public class HedgingApplication {
 
 	@Bean
 	ApplicationListener<ApplicationReadyEvent> hedge(WebClient client) {
-		return event -> {
-			client.get().uri("http://customer-service/customers").retrieve()
-					.bodyToFlux(Customer.class)//
-					.subscribe(log::info);
-
-		};
+		return event -> client//
+				.get()//
+				.uri("http://customer-service/customers")//
+				.retrieve()//
+				.bodyToFlux(Customer.class)//
+				.subscribe(log::info);
 	}
 
 	@Bean
