@@ -20,6 +20,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Make sure to start `eureka-service` and at least three instances of `customer-service`
+ *
+ * TODO: introduce some delay in the `customer-service` to simulate the benefits of
+ * hedging
+ *
+ */
 @Log4j2
 @SpringBootApplication
 public class HedgingApplication {
