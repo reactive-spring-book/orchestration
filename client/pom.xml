@@ -3,7 +3,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <packaging>jar</packaging>
-    <artifactId> client </artifactId>
+    <artifactId>client</artifactId>
     <parent>
         <groupId>rsb</groupId>
         <artifactId>orchestration</artifactId>
@@ -11,6 +11,11 @@
         <relativePath>..</relativePath>
     </parent>
     <dependencies>
-     
+
+        <dependency>
+            <groupId>io.github.pellse</groupId>
+            <artifactId>assembler-flux</artifactId>
+            <version>0.2.0</version>
+        </dependency>
     </dependencies>
 </project>

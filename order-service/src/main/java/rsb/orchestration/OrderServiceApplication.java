@@ -13,7 +13,6 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 @SpringBootApplication
 public class OrderServiceApplication {
@@ -51,16 +50,24 @@ class OrderRestController {
 	Mono<Collection<Order>> byId(@PathVariable Integer id) {
 		return Mono.just(this.orders.get(id));
 	}
+	/*
+	 * @GetMapping Mono<Map<Integer, List<Order>>> orders(
+	 *
+	 * @RequestParam(required = false) Integer[] ids) { var customerStream =
+	 * this.orders.keySet().stream(); var includedCustomerIds = Arrays.asList(ids); var
+	 * ordersForCustomer = customerStream.filter(includedCustomerIds::contains) .map(id ->
+	 * Map.entry(id, this.orders.get(id))).collect(Collectors
+	 * .toConcurrentMap(Map.Entry::getKey, Map.Entry::getValue)); return
+	 * Mono.just(ordersForCustomer); }
+	 */
 
 	@GetMapping
-	Mono<Map<Integer, List<Order>>> orders(
-			@RequestParam(required = false) Integer[] ids) {
+	Flux<Order> orders(@RequestParam(required = false) Integer[] ids) {
 		var customerStream = this.orders.keySet().stream();
 		var includedCustomerIds = Arrays.asList(ids);
-		var ordersForCustomer = customerStream.filter(includedCustomerIds::contains)
-				.map(id -> Map.entry(id, this.orders.get(id))).collect(Collectors
-						.toConcurrentMap(Map.Entry::getKey, Map.Entry::getValue));
-		return Mono.just(ordersForCustomer);
+		var orderStream = customerStream.filter(includedCustomerIds::contains)//
+				.flatMap(id -> this.orders.get(id).stream());
+		return Flux.fromStream(orderStream);
 	}
 
 }
