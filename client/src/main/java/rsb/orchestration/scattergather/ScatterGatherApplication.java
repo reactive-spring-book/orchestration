@@ -11,6 +11,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import rsb.orchestration.Customer;
 import rsb.orchestration.Order;
+import rsb.orchestration.Profile;
 
 import java.util.List;
 
@@ -35,11 +36,12 @@ public class ScatterGatherApplication {
 			Flux<Order> ordersFlux = ensureCached(client.getOrders(ids));
 			Flux<CustomerOrders> customerOrdersFlux = customerFlux//
 					.flatMap(customer -> {
-						Mono<List<Order>> collectList = ordersFlux
+						Mono<List<Order>> listOfOrders = ordersFlux
 								.filter(o -> o.getCustomerId().equals(customer.getId()))
 								.collectList();
-						return Flux.zip(Mono.just(customer), collectList,
-								client.getProfile(customer.getId()));
+						Mono<Profile> profileMono = client.getProfile(customer.getId());
+						Mono<Customer> customerMono = Mono.just(customer);
+						return Flux.zip(customerMono, listOfOrders, profileMono);
 					})//
 					.map(tuple -> new CustomerOrders(tuple.getT1(), tuple.getT2(),
 							tuple.getT3()));
