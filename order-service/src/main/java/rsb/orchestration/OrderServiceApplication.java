@@ -46,21 +46,6 @@ class OrderRestController {
 						return listOfOrders;
 					}));
 
-	@GetMapping("/{id}")
-	Mono<Collection<Order>> byId(@PathVariable Integer id) {
-		return Mono.just(this.orders.get(id));
-	}
-	/*
-	 * @GetMapping Mono<Map<Integer, List<Order>>> orders(
-	 *
-	 * @RequestParam(required = false) Integer[] ids) { var customerStream =
-	 * this.orders.keySet().stream(); var includedCustomerIds = Arrays.asList(ids); var
-	 * ordersForCustomer = customerStream.filter(includedCustomerIds::contains) .map(id ->
-	 * Map.entry(id, this.orders.get(id))).collect(Collectors
-	 * .toConcurrentMap(Map.Entry::getKey, Map.Entry::getValue)); return
-	 * Mono.just(ordersForCustomer); }
-	 */
-
 	@GetMapping
 	Flux<Order> orders(@RequestParam(required = false) Integer[] ids) {
 		var customerStream = this.orders.keySet().stream();

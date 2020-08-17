@@ -4,6 +4,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.cloud.client.loadbalancer.reactive.ReactorLoadBalancerExchangeFilterFunction;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -16,17 +17,25 @@ import rsb.orchestration.Profile;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * This makes use of several interesting qualities:
+ *
+ * - zip() makes it easy to process related calls as peers - s-c-loadbalancer (and
+ * caffeine for caching) work well with Reactive - s-c-discovery-client makes it to do
+ * client-side loadbalancing - shows one-to-one, one-to-many resolution -
+ */
 @Log4j2
 @SpringBootApplication
 public class ScatterGatherApplication {
 
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) {
 		SpringApplication.run(ScatterGatherApplication.class, args);
 	}
 
 	@Bean
-	WebClient client(WebClient.Builder builder) {
-		return builder.build();
+	WebClient client(WebClient.Builder builder,
+			ReactorLoadBalancerExchangeFilterFunction lbFunction) {
+		return builder.filter(lbFunction).build();
 	}
 
 	@Bean
@@ -37,29 +46,34 @@ public class ScatterGatherApplication {
 			Flux<Order> ordersFlux = ensureCached(client.getOrders(ids));
 			Flux<CustomerOrders> customerOrdersFlux = customerFlux//
 					.flatMap(customer -> {
-						Mono<List<Order>> listOfOrdersMono = ordersFlux
-								.filter(o -> o.getCustomerId().equals(customer.getId()))
-								.collectList();
+						Flux<Order> filteredOrdersFlux = ordersFlux
+								.filter(o -> o.getCustomerId().equals(customer.getId()));
 						Mono<Profile> profileMono = client.getProfile(customer.getId());
 						Mono<Customer> customerMono = Mono.just(customer);
-						return Flux.zip(customerMono, listOfOrdersMono, profileMono);
+						return Flux.zip(customerMono, filteredOrdersFlux.collectList(),
+								profileMono);
 					})//
 					.map(tuple -> new CustomerOrders(tuple.getT1(), tuple.getT2(),
 							tuple.getT3()));
 
-			var start = new AtomicLong();
-			customerOrdersFlux//
-					.doOnSubscribe(sub -> start.set(System.currentTimeMillis()))//
-					.doOnComplete(() -> log.info("request duration: "
-							+ (System.currentTimeMillis() - start.get())))//
-					.subscribe(customerOrder -> {
-						log.info("---------------");
-						log.info(customerOrder.getCustomer().toString());
-						log.info(customerOrder.getProfile().toString());
-						customerOrder.getOrders().forEach(order -> log.info(
-								customerOrder.getCustomer().getId() + ": " + order));
-					});
+			for (var i = 0; i < 5; i++) // it gets faster after successive runs
+				run(customerOrdersFlux);
 		};
+	}
+
+	private void run(Flux<CustomerOrders> customerOrdersFlux) {
+		var start = new AtomicLong();
+		customerOrdersFlux//
+				.doOnSubscribe(sub -> start.set(System.currentTimeMillis()))//
+				.doOnComplete(() -> log.info("request duration: "
+						+ (System.currentTimeMillis() - start.get())))//
+				.subscribe(customerOrder -> {
+					log.info("---------------");
+					log.info(customerOrder.getCustomer().toString());
+					log.info(customerOrder.getProfile().toString());
+					customerOrder.getOrders().forEach(order -> log
+							.info(customerOrder.getCustomer().getId() + ": " + order));
+				});
 	}
 
 	private <T> Flux<T> ensureCached(Flux<T> in) {

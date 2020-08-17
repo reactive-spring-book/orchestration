@@ -14,15 +14,11 @@
     <modules>
         <module>order-service</module>
         <module>profile-service</module>
-        <module>customer-service </module>
+        <module>customer-service</module>
         <module>client</module>
         <module>eureka-service</module>
     </modules>
     <dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-webflux</artifactId>
-        </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -44,8 +40,6 @@
             <artifactId>reactor-test</artifactId>
             <scope>test</scope>
         </dependency>
-
-
     </dependencies>
 
     <build>

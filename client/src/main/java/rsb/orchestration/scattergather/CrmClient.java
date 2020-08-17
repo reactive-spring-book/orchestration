@@ -19,19 +19,19 @@ class CrmClient {
 	private final WebClient http;
 
 	Mono<Profile> getProfile(Integer customerId) {
-		var profilesRoot = "http://localhost:8083/profiles/{id}";
+		var profilesRoot = "http://profile-service/profiles/{id}";
 		return http.get().uri(profilesRoot, customerId).retrieve()
 				.bodyToMono(Profile.class);
 	}
 
 	Flux<Customer> getCustomers(Integer[] ids) {
-		var customersRoot = "http://localhost:8081/customers?ids="
+		var customersRoot = "http://customer-service/customers?ids="
 				+ buildStringForIds(ids);
 		return http.get().uri(customersRoot).retrieve().bodyToFlux(Customer.class);
 	}
 
 	Flux<Order> getOrders(Integer[] ids) {
-		var ordersRoot = "http://localhost:8082/orders?ids=" + buildStringForIds(ids);
+		var ordersRoot = "http://order-service/orders?ids=" + buildStringForIds(ids);
 		return http.get().uri(ordersRoot).retrieve().bodyToFlux(Order.class);
 	}
 
