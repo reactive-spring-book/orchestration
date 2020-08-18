@@ -1,24 +1,30 @@
 package rsb.orchestration.hedging;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
+import org.springframework.cloud.client.loadbalancer.reactive.ReactiveLoadBalancer;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.util.Assert;
 import org.springframework.web.reactive.function.client.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 import rsb.orchestration.Customer;
 
 import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * Make sure to start `eureka-service` and at least three instances of `customer-service`
@@ -41,14 +47,16 @@ public class HedgingApplication {
 	}
 
 	@Bean
-	HedgeExchangeFilterFunction hedgeExchangeFilterFunction(DiscoveryClient dc,
-			LoadBalancerClient lbc) {
-		return new HedgeExchangeFilterFunction(dc, lbc, 3);
+	HedgingExchangeFilterFunction hedgingExchangeFilterFunction(
+			@Value("${rsb.lb.max-nodes:2}") int maxNodes,
+			ReactiveLoadBalancer.Factory<ServiceInstance> rlb) {
+		return new HedgingExchangeFilterFunction(rlb, maxNodes);
 	}
 
 	@Bean
-	WebClient client(WebClient.Builder builder, HedgeExchangeFilterFunction eff) {
-		return builder.filter(eff).build();
+	WebClient client(WebClient.Builder builder,
+			HedgingExchangeFilterFunction hedgingExchangeFilterFunction) {
+		return builder.filter(hedgingExchangeFilterFunction).build();
 	}
 
 	public static void main(String[] args) {
@@ -58,7 +66,61 @@ public class HedgingApplication {
 }
 
 @Log4j2
-class HedgeExchangeFilterFunction implements ExchangeFilterFunction {
+@RequiredArgsConstructor
+class HedgingExchangeFilterFunction implements ExchangeFilterFunction {
+
+	private final ReactiveLoadBalancer.Factory<ServiceInstance> serviceInstanceFactory;
+
+	private final int maxNodes;
+
+	private Flux<ClientResponse> callDistinctNodes(int maxNodes, ClientRequest request,
+			ReactiveLoadBalancer.Factory<ServiceInstance> serviceInstanceFactory,
+			ExchangeFunction next) {
+		var requestUrl = request.url();
+		var apiName = requestUrl.getHost();
+		var api = serviceInstanceFactory.getInstance(apiName);
+		var chosen = Flux.from(api.choose());
+		return chosen//
+				.map(responseServiceInstance -> {
+					var server = responseServiceInstance.getServer();
+					return Tuples.of(
+							server.getScheme() + "://" + server.getHost() + ':'
+									+ server.getPort(),
+							URI.create(requestUrl.getScheme() + "://" + server.getHost()
+									+ ':' + server.getPort() + "/"
+									+ requestUrl.getPath()));
+				})//
+				.distinct((Function<Tuple2<String, URI>, Object>) Tuple2::getT1)//
+				.flatMap(tuple -> invoke(tuple.getT2(), request, next))//
+				.take(maxNodes);
+	}
+
+	private Mono<ClientResponse> invoke(URI uri, ClientRequest request,
+			ExchangeFunction next) {
+		var newRequest = ClientRequest//
+				.create(request.method(), uri)//
+				.headers(h -> h.addAll(request.headers()))//
+				.cookies(c -> c.addAll(request.cookies()))//
+				.attributes(a -> a.putAll(request.attributes()))//
+				.body(request.body())//
+				.build();
+		return next.exchange(newRequest)//
+				.doOnNext(cr -> log.info("launching " + newRequest.url()));
+	}
+
+	@Override
+	public Mono<ClientResponse> filter(ClientRequest clientRequest,
+			ExchangeFunction exchangeFunction) {
+		var clientResponseFlux = callDistinctNodes(this.maxNodes, clientRequest,
+				serviceInstanceFactory, exchangeFunction);
+		return Flux.first(clientResponseFlux).singleOrEmpty();
+	}
+
+}
+
+@Deprecated
+@Log4j2
+class ClassicHedgeExchangeFilterFunction implements ExchangeFilterFunction {
 
 	private final DiscoveryClient discoveryClient;
 
@@ -66,7 +128,7 @@ class HedgeExchangeFilterFunction implements ExchangeFilterFunction {
 
 	private final int attempts, maxAttempts;
 
-	HedgeExchangeFilterFunction(DiscoveryClient discoveryClient,
+	ClassicHedgeExchangeFilterFunction(DiscoveryClient discoveryClient,
 			LoadBalancerClient loadBalancerClient, int attempts) {
 		this.discoveryClient = discoveryClient;
 		this.loadBalancerClient = loadBalancerClient;
