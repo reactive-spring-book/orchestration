@@ -73,26 +73,24 @@ class HedgingExchangeFilterFunction implements ExchangeFilterFunction {
 
 	private final int maxNodes;
 
-	private Flux<ClientResponse> callDistinctNodes(int maxNodes, ClientRequest request,
-			ReactiveLoadBalancer.Factory<ServiceInstance> serviceInstanceFactory,
-			ExchangeFunction next) {
-		var requestUrl = request.url();
+	@Override
+	public Mono<ClientResponse> filter(ClientRequest clientRequest,
+			ExchangeFunction exchangeFunction) {
+		var requestUrl = clientRequest.url();
 		var apiName = requestUrl.getHost();
 		var api = serviceInstanceFactory.getInstance(apiName);
 		var chosen = Flux.from(api.choose());
-		return chosen//
+		var clientResponseFlux = chosen//
 				.map(responseServiceInstance -> {
 					var server = responseServiceInstance.getServer();
-					return Tuples.of(
-							server.getScheme() + "://" + server.getHost() + ':'
-									+ server.getPort(),
-							URI.create(requestUrl.getScheme() + "://" + server.getHost()
-									+ ':' + server.getPort() + "/"
-									+ requestUrl.getPath()));
+					var uriString = requestUrl.getScheme() + "://" + server.getHost()
+							+ ':' + server.getPort() + requestUrl.getPath();
+					return URI.create(uriString);
 				})//
-				.distinct((Function<Tuple2<String, URI>, Object>) Tuple2::getT1)//
-				.flatMap(tuple -> invoke(tuple.getT2(), request, next))//
-				.take(maxNodes);
+				.distinct((Function<URI, Object>) URI::toString)//
+				.flatMap(uri -> invoke(uri, clientRequest, exchangeFunction))//
+				.take(this.maxNodes);
+		return Flux.first(clientResponseFlux).singleOrEmpty();
 	}
 
 	private Mono<ClientResponse> invoke(URI uri, ClientRequest request,
@@ -104,16 +102,9 @@ class HedgingExchangeFilterFunction implements ExchangeFilterFunction {
 				.attributes(a -> a.putAll(request.attributes()))//
 				.body(request.body())//
 				.build();
-		return next.exchange(newRequest)//
+		return next//
+				.exchange(newRequest)//
 				.doOnNext(cr -> log.info("launching " + newRequest.url()));
-	}
-
-	@Override
-	public Mono<ClientResponse> filter(ClientRequest clientRequest,
-			ExchangeFunction exchangeFunction) {
-		var clientResponseFlux = callDistinctNodes(this.maxNodes, clientRequest,
-				serviceInstanceFactory, exchangeFunction);
-		return Flux.first(clientResponseFlux).singleOrEmpty();
 	}
 
 }
