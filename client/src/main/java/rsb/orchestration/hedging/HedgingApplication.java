@@ -16,15 +16,13 @@ import org.springframework.util.Assert;
 import org.springframework.web.reactive.function.client.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
-import reactor.util.function.Tuples;
 import rsb.orchestration.Customer;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 
 /**
  * Make sure to start `eureka-service` and at least three instances of `customer-service`
@@ -79,24 +77,31 @@ class HedgingExchangeFilterFunction implements ExchangeFilterFunction {
 		var requestUrl = clientRequest.url();
 		var apiName = requestUrl.getHost();
 		var api = serviceInstanceFactory.getInstance(apiName);
-		var chosen = Flux.from(api.choose());
-		var clientResponseFlux = chosen//
-				.map(responseServiceInstance -> {
-					var server = responseServiceInstance.getServer();
-					var uriString = requestUrl.getScheme() + "://" + server.getHost()
-							+ ':' + server.getPort() + requestUrl.getPath();
-					return URI.create(uriString);
-				})//
-				.distinct((Function<URI, Object>) URI::toString)//
-				.flatMap(uri -> invoke(uri, clientRequest, exchangeFunction))//
-				.take(this.maxNodes);
-		return Flux.first(clientResponseFlux).singleOrEmpty();
+
+		// this is only ONE SI. change the code to handle more than one!
+
+		var responses = new ArrayList<Mono<ClientResponse>>();
+
+		for (var i = 0; i < maxNodes; i++) {
+			var clientResponse = Mono.from(api.choose())//
+					.map(responseServiceInstance -> {
+						var server = responseServiceInstance.getServer();
+						return (requestUrl.getScheme() + "://" + server.getHost() + ':'
+								+ server.getPort() + requestUrl.getPath());
+					})//
+					.flatMap(uri -> invoke(uri, clientRequest, exchangeFunction));
+
+			responses.add(clientResponse);
+		}
+		Flux<ClientResponse> clientResponseFlux = Flux.fromIterable(responses)
+				.flatMap(x -> x);
+		return Flux.first(clientResponseFlux).take(1).singleOrEmpty();
 	}
 
-	private Mono<ClientResponse> invoke(URI uri, ClientRequest request,
+	private Mono<ClientResponse> invoke(String uri, ClientRequest request,
 			ExchangeFunction next) {
 		var newRequest = ClientRequest//
-				.create(request.method(), uri)//
+				.create(request.method(), URI.create(uri))//
 				.headers(h -> h.addAll(request.headers()))//
 				.cookies(c -> c.addAll(request.cookies()))//
 				.attributes(a -> a.putAll(request.attributes()))//
