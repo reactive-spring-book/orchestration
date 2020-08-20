@@ -13,6 +13,7 @@
     </parent>
     <modules>
         <module>order-service</module>
+        <module>slow-service</module>
         <module>profile-service</module>
         <module>customer-service</module>
         <module>client</module>
