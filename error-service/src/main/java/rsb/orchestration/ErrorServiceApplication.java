@@ -21,29 +21,23 @@ public class ErrorServiceApplication {
 
 	private final AtomicInteger port = new AtomicInteger();
 
-	private final Map<String, AtomicInteger> countOfClientCalls = new ConcurrentHashMap<>();
+	private final Map<String, AtomicInteger> clientCounts = new ConcurrentHashMap<>();
 
-	@GetMapping("/error")
-	Mono<Map<String, String>> getMessageMaybe(
-			@RequestParam(required = false) String uid) {
-		this.countOfClientCalls.putIfAbsent(uid, new AtomicInteger(0));
-
-		AtomicInteger individualCalls = this.countOfClientCalls.get(uid);
-		individualCalls.incrementAndGet();
-
-		return Math.random() >= .5
+	@GetMapping("/retry")
+	Mono<Map<String, String>> retryEndpoint(@RequestParam(required = false) String uid) {
+		this.clientCounts.putIfAbsent(uid, new AtomicInteger(0));
+		var individualCalls = this.clientCounts.get(uid);
+		var countThusFar = individualCalls.incrementAndGet();
+		return countThusFar > 2
 				? Mono.just(Map.of("greeting",
-						"It works (from port " + this.port.get() + "): attempt #"
-								+ individualCalls.get()))
+						String.format("greeting attempt # %s from port %s", countThusFar,
+								this.port.get())))
 				: Mono.error(new IllegalArgumentException());
 	}
 
 	@EventListener
 	public void web(WebServerInitializedEvent event) {
 		port.set(event.getWebServer().getPort());
-		if (log.isInfoEnabled()) {
-			log.info("running on port " + port.get());
-		}
 	}
 
 	public static void main(String args[]) {
