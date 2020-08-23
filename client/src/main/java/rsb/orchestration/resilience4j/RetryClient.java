@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -16,7 +17,7 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 import java.util.UUID;
 
-/**
+/*
  * This client demonstrates using the RetryOperator. The endpoint that we're invoking is
  * configured to fail for the first 2 times, and return a value the third time.
  * Accordingly, this R4J client is configured to give up after 3 attempts. So it _should_
@@ -25,6 +26,7 @@ import java.util.UUID;
  */
 @Log4j2
 @Component
+@Profile("retry")
 @RequiredArgsConstructor
 class RetryClient implements ApplicationListener<ApplicationReadyEvent> {
 

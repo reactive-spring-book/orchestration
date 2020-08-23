@@ -29,7 +29,7 @@ class BulkheadClient implements ApplicationListener<ApplicationReadyEvent> {
 		Mono<String> retry = GreetingClientUtils
 				.getGreetingFor(this.http, this.uid, "bulkhead")
 				.transform(BulkheadOperator.of(this.bulkhead));
-		retry.subscribe(log::info);
+		// retry.subscribe(log::info);
 	}
 
 }

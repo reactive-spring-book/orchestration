@@ -23,16 +23,35 @@ public class ErrorServiceApplication {
 
 	private final Map<String, AtomicInteger> clientCounts = new ConcurrentHashMap<>();
 
-	@GetMapping("/retry")
-	Mono<Map<String, String>> retryEndpoint(@RequestParam(required = false) String uid) {
+	private int registerClient(String uid) {
 		this.clientCounts.putIfAbsent(uid, new AtomicInteger(0));
-		var individualCalls = this.clientCounts.get(uid);
-		var countThusFar = individualCalls.incrementAndGet();
+		return this.clientCounts.get(uid).incrementAndGet();
+	}
+
+	@GetMapping("/ok")
+	Mono<Map<String, String>> okEndpoint(@RequestParam String uid) {
+		var countThusFar = this.registerClient(uid);
+		return Mono.just(Map.of("greeting", String.format(
+				"greeting attempt # %s from port %s", countThusFar, this.port.get())));
+	}
+
+	@GetMapping("/retry")
+	Mono<Map<String, String>> retryEndpoint(@RequestParam String uid) {
+		var countThusFar = this.registerClient(uid);
 		return countThusFar > 2
 				? Mono.just(Map.of("greeting",
 						String.format("greeting attempt # %s from port %s", countThusFar,
 								this.port.get())))
 				: Mono.error(new IllegalArgumentException());
+	}
+
+	// how do i demo the circuit breaker? im expecting that if a cleitn gets enough
+	// failures itll get a particular exception on the client
+	// which i can then use to decide to make some other call
+	@GetMapping("/cb")
+	Mono<Map<String, String>> circuitBreakerEndpoint(@RequestParam String uid) {
+		registerClient(uid);
+		return Mono.error(new IllegalArgumentException());
 	}
 
 	@EventListener
