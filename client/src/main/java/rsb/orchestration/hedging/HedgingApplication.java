@@ -29,7 +29,9 @@ public class HedgingApplication {
 				.uri("http://slow-service/greetings")//
 				.retrieve()//
 				.bodyToFlux(GreetingResponse.class)//
-				.doOnNext(log::info).doOnError(ex -> log.info(ex.toString())).subscribe();
+				.doOnNext(log::info)//
+				.doOnError(ex -> log.info(ex.toString()))//
+				.subscribe();
 	}
 
 	@Bean

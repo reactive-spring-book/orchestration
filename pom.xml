@@ -13,6 +13,7 @@
     </parent>
     <modules>
         <module>order-service</module>
+        <module>error-service</module>
         <module>slow-service</module>
         <module>profile-service</module>
         <module>customer-service</module>
@@ -20,6 +21,7 @@
         <module>eureka-service</module>
     </modules>
     <dependencies>
+
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
