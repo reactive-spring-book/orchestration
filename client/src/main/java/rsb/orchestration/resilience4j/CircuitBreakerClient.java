@@ -17,6 +17,10 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 import java.util.UUID;
 
+/*
+ The circuit breaker starts rejecting requests destined to a failing endpoint after some configurable percentage of those requests in a moving window in the past have failed. We demonstrate this effect in the following demo by having the client attempt to call a downstream service and, after enough failed attempts, have those calls
+ rejected with `CallNotPermittedException`.
+ */
 @Log4j2
 @Profile("cb")
 @Component
@@ -38,8 +42,8 @@ class CircuitBreakerClient implements ApplicationListener<ApplicationReadyEvent>
 	@Override
 	public void onApplicationEvent(ApplicationReadyEvent event) {
 
-		Mono<String> request = buildRequest()
-				.transformDeferred(CircuitBreakerOperator.of(this.circuitBreaker))
+		buildRequest() //
+				.transformDeferred(CircuitBreakerOperator.of(this.circuitBreaker)) //
 				.doOnError(ex -> {
 					if (ex instanceof WebClientResponseException.InternalServerError) {
 						log.error("oops! We got a " + ex.getClass().getSimpleName()
@@ -51,9 +55,8 @@ class CircuitBreakerClient implements ApplicationListener<ApplicationReadyEvent>
 								"no more requests are permitted, now would be a good time to fail fast");
 
 					}
-				}).retry(5);
-
-		request.subscribe();
+				}) //
+				.retry(5).subscribe();
 
 	}
 
