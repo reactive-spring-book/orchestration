@@ -18,8 +18,11 @@ import java.time.Duration;
 import java.util.UUID;
 
 /*
- The circuit breaker starts rejecting requests destined to a failing endpoint after some configurable percentage of those requests in a moving window in the past have failed. We demonstrate this effect in the following demo by having the client attempt to call a downstream service and, after enough failed attempts, have those calls
- rejected with `CallNotPermittedException`.
+ The circuit breaker starts rejecting requests destined to a failing endpoint
+ after some configurable percentage of those requests in a moving window in the
+ past have failed. We demonstrate this effect in the following demo by having
+ the client attempt to call a downstream service and, after enough failed attempts,
+ have those calls rejected with `CallNotPermittedException`.
  */
 @Log4j2
 @Profile("cb")
