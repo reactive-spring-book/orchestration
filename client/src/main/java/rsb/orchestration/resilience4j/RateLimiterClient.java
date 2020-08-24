@@ -23,9 +23,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RequiredArgsConstructor
 class RateLimiterClient implements ApplicationListener<ApplicationReadyEvent> {
 
-	// measures how many distinct requests arrive in a given interval (like 1s)
-	// private final RateLimiter rateLimiter = RateLimiter.ofDefaults("greetings-rl");
-
 	/*
 	 * This measures how many requests we can make in a distinct period. I've configured
 	 * the RateLimiter to have a _very_ low threshold below. It'll allow no more than 10
@@ -36,6 +33,9 @@ class RateLimiterClient implements ApplicationListener<ApplicationReadyEvent> {
 	 * from 1 second to 5 seconds. Ive then configured two atomic numbers to keep track of
 	 * either valid responses _or_ RequestNotPermitted responses. If we observe a valid
 	 * value then well increment the results counter, otherwise the errors counter.
+	 *
+	 * For more: people are advised to consider Spring Cloud Gateway's rate limiter and
+	 * the Alibaba Sentinel rate limiter.
 	 */
 
 	private final String uid = UUID.randomUUID().toString();
@@ -67,15 +67,19 @@ class RateLimiterClient implements ApplicationListener<ApplicationReadyEvent> {
 
 	private Mono<String> buildRequest(CountDownLatch cdl, AtomicInteger results,
 			AtomicInteger errors, RateLimiter rateLimiter, int count) {
-		return GreetingClientUtils.getGreetingFor(this.http, this.uid, "ok")
-				.transformDeferred(RateLimiterOperator.of(rateLimiter)).doOnError(ex -> {
+		return GreetingClientUtils//
+				.getGreetingFor(this.http, this.uid, "ok")//
+				.transformDeferred(RateLimiterOperator.of(rateLimiter))//
+				.doOnError(ex -> {
 					errors.incrementAndGet();
 					log.info("oops! got an error of type " + ex.getClass().getName());
-				}).doOnNext(reply -> {
+				})///
+				.doOnNext(reply -> {
 					results.incrementAndGet();
 					log.info("count is " + count + " @ " + Instant.now() + "(" + reply
 							+ ")");
-				}).doOnTerminate(cdl::countDown);
+				})//
+				.doOnTerminate(cdl::countDown);
 
 	}
 
