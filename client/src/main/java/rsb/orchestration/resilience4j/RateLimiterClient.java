@@ -8,6 +8,7 @@ import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -20,6 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Log4j2
 @Component
+@Profile("rl")
 @RequiredArgsConstructor
 class RateLimiterClient implements ApplicationListener<ApplicationReadyEvent> {
 
