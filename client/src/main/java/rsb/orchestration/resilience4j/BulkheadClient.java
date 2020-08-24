@@ -18,6 +18,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 class BulkheadClient implements ApplicationListener<ApplicationReadyEvent> {
 
+	// measures how many threads are used at the same time; bounds the # of threads
 	private final Bulkhead bulkhead = Bulkhead.ofDefaults("greetings-bulkhead");
 
 	private final String uid = UUID.randomUUID().toString();

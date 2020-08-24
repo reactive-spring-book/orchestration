@@ -46,7 +46,7 @@ class RetryClient implements ApplicationListener<ApplicationReadyEvent> {
 	public void onApplicationEvent(ApplicationReadyEvent event) {
 		Mono<String> retry = GreetingClientUtils
 				.getGreetingFor(this.http, this.uid, "retry")
-				.transform(RetryOperator.of(this.retry));
+				.transformDeferred(RetryOperator.of(this.retry));
 		retry.subscribe(log::info);
 	}
 

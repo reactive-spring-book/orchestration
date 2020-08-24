@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -17,6 +18,7 @@ import java.time.Duration;
 import java.util.UUID;
 
 @Log4j2
+@Profile("cb")
 @Component
 @RequiredArgsConstructor
 class CircuitBreakerClient implements ApplicationListener<ApplicationReadyEvent> {
