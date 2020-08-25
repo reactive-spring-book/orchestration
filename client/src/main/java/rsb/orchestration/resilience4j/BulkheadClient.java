@@ -18,10 +18,14 @@ import java.time.Duration;
 import java.util.UUID;
 
 /*
- The idea behind a bulkhead is to ensure that we don't have too many threads in use. Well, obviously, in a reactive application this is
- <EM>really</EM> hard to do! There are very few ways to get too many threads involved, so I've had to fairly artificially
-  constrain this example by running everything on the same thread. But it works. You'll see that roughly half of the requests are able to get launched before the bulkhead kicks in. You may need to fiddle with the `maxWaitDuration` value on your machine. Too high a value and the in-flight requests will finish right up and free up a thread. Too low a value and maybe nothing gets done.
-
+ The idea behind a bulkhead is to ensure that we don't have too many threads in use.
+ Well, obviously, in a reactive application this is <EM>really</EM> hard to do! There
+ are very few ways to get too many threads involved, so I've had to fairly artificially
+ constrain this example by running everything on the same thread. But it works. You'll
+ see that roughly half of the requests are able to get launched before the bulkhead kicks in.
+ You may need to fiddle with the `maxWaitDuration` value on your machine. Too high a value and
+ the in-flight requests will finish right up and free up a thread. Too low a value and
+ maybe nothing gets done.
  */
 @Log4j2
 @Component
