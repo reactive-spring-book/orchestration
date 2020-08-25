@@ -50,14 +50,19 @@ class BulkheadClient implements ApplicationListener<ApplicationReadyEvent> {
 
 	private void buildRequest(Scheduler immediate, int i) {
 		log.info("attempting #" + i);
-		GreetingClientUtils.getGreetingFor(this.http, this.uid, "ok")
-				.transform(BulkheadOperator.of(this.bulkhead)).subscribeOn(immediate)
-				.publishOn(immediate).onErrorResume(throwable -> {
+		GreetingClientUtils //
+				.getGreetingFor(this.http, this.uid, "ok") //
+				.transform(BulkheadOperator.of(this.bulkhead)) //
+				.subscribeOn(immediate)//
+				.publishOn(immediate) //
+				.onErrorResume(throwable -> {
 					log.info("the bulkhead kicked in for request #" + i
 							+ ". Received the following exception "
 							+ throwable.getClass().getName() + '.');
 					return Mono.empty();
-				}).onErrorStop().subscribe();
+				}) //
+				.onErrorStop() //
+				.subscribe();
 	}
 
 }
