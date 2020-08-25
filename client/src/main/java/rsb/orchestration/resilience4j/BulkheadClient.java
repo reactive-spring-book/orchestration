@@ -1,17 +1,20 @@
 package rsb.orchestration.resilience4j;
 
 import io.github.resilience4j.bulkhead.Bulkhead;
+import io.github.resilience4j.bulkhead.BulkheadConfig;
 import io.github.resilience4j.reactor.bulkhead.operator.BulkheadOperator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 
+import java.time.Duration;
 import java.util.UUID;
 
 @Log4j2
@@ -20,19 +23,41 @@ import java.util.UUID;
 @RequiredArgsConstructor
 class BulkheadClient implements ApplicationListener<ApplicationReadyEvent> {
 
-	// measures how many threads are used at the same time; bounds the # of threads
-	private final Bulkhead bulkhead = Bulkhead.ofDefaults("greetings-bulkhead");
-
 	private final String uid = UUID.randomUUID().toString();
+
+	private final int availableProcessors = Runtime.getRuntime().availableProcessors();
+
+	private final int maxCalls = availableProcessors / 2;
 
 	private final WebClient http;
 
+	private final Bulkhead bulkhead = Bulkhead.of("greetings-bulkhead",
+			BulkheadConfig.custom().writableStackTraceEnabled(true)
+					.maxConcurrentCalls(this.maxCalls)
+					.maxWaitDuration(Duration.ofMillis(5)).build());
+
 	@Override
 	public void onApplicationEvent(ApplicationReadyEvent event) {
-		Mono<String> retry = GreetingClientUtils
-				.getGreetingFor(this.http, this.uid, "bulkhead")
-				.transform(BulkheadOperator.of(this.bulkhead));
-		// retry.subscribe(log::info);
+
+		log.info("there are " + availableProcessors
+				+ " available, therefore there should be " + availableProcessors
+				+ " in the default thread pool");
+		var immediate = Schedulers.immediate();
+		for (var i = 0; i < availableProcessors; i++) {
+			buildRequest(immediate, i);
+		}
+	}
+
+	private void buildRequest(Scheduler immediate, int i) {
+		log.info("attempting #" + i);
+		GreetingClientUtils.getGreetingFor(this.http, this.uid, "ok")
+				.transform(BulkheadOperator.of(this.bulkhead)).subscribeOn(immediate)
+				.publishOn(immediate).onErrorResume(throwable -> {
+					log.info("the bulkhead kicked in for request #" + i
+							+ ". Received the following exception "
+							+ throwable.getClass().getName() + '.');
+					return Mono.empty();
+				}).onErrorStop().subscribe();
 	}
 
 }
