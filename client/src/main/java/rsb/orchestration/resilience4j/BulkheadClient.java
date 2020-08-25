@@ -31,14 +31,15 @@ class BulkheadClient implements ApplicationListener<ApplicationReadyEvent> {
 
 	private final WebClient http;
 
-	private final Bulkhead bulkhead = Bulkhead.of("greetings-bulkhead",
-			BulkheadConfig.custom().writableStackTraceEnabled(true)
-					.maxConcurrentCalls(this.maxCalls)
-					.maxWaitDuration(Duration.ofMillis(5)).build());
+	private final Bulkhead bulkhead = Bulkhead.of("greetings-bulkhead", BulkheadConfig //
+			.custom() //
+			.writableStackTraceEnabled(true) //
+			.maxConcurrentCalls(this.maxCalls)//
+			.maxWaitDuration(Duration.ofMillis(5)) //
+			.build());
 
 	@Override
 	public void onApplicationEvent(ApplicationReadyEvent event) {
-
 		log.info("there are " + availableProcessors
 				+ " available, therefore there should be " + availableProcessors
 				+ " in the default thread pool");
@@ -49,7 +50,7 @@ class BulkheadClient implements ApplicationListener<ApplicationReadyEvent> {
 	}
 
 	private Mono<String> buildRequest(Scheduler immediate, int i) {
-		log.info("attempting #" + i);
+		log.info("bulkhead attempt #" + i);
 		return GreetingClientUtils //
 				.getGreetingFor(this.http, this.uid, "ok") //
 				.transform(BulkheadOperator.of(this.bulkhead)) //
