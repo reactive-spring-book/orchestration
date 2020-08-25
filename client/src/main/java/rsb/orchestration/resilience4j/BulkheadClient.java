@@ -17,6 +17,12 @@ import reactor.core.scheduler.Schedulers;
 import java.time.Duration;
 import java.util.UUID;
 
+/*
+ The idea behind a bulkhead is to ensure that we don't have too many threads in use. Well, obviously, in a reactive application this is
+ <EM>really</EM> hard to do! There are very few ways to get too many threads involved, so I've had to fairly artificially
+  constrain this example by running everything on the same thread. But it works. You'll see that roughly half of the requests are able to get launched before the bulkhead kicks in. You may need to fiddle with the `maxWaitDuration` value on your machine. Too high a value and the in-flight requests will finish right up and free up a thread. Too low a value and maybe nothing gets done.
+
+ */
 @Log4j2
 @Component
 @Profile("bulkhead")
@@ -49,13 +55,13 @@ class BulkheadClient implements ApplicationListener<ApplicationReadyEvent> {
 		}
 	}
 
-	private Mono<String> buildRequest(Scheduler immediate, int i) {
+	private Mono<String> buildRequest(Scheduler scheduler, int i) {
 		log.info("bulkhead attempt #" + i);
 		return GreetingClientUtils //
 				.getGreetingFor(this.http, this.uid, "ok") //
 				.transform(BulkheadOperator.of(this.bulkhead)) //
-				.subscribeOn(immediate)//
-				.publishOn(immediate) //
+				.subscribeOn(scheduler)//
+				.publishOn(scheduler) //
 				.onErrorResume(throwable -> {
 					log.info("the bulkhead kicked in for request #" + i
 							+ ". Received the following exception "
