@@ -19,7 +19,7 @@ import java.util.UUID;
 
 @Log4j2
 @Component
-// @Profile("bulkhead")
+@Profile("bulkhead")
 @RequiredArgsConstructor
 class BulkheadClient implements ApplicationListener<ApplicationReadyEvent> {
 
