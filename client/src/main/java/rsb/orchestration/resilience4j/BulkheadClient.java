@@ -19,7 +19,7 @@ import java.util.UUID;
 
 @Log4j2
 @Component
-@Profile("bulkhead")
+// @Profile("bulkhead")
 @RequiredArgsConstructor
 class BulkheadClient implements ApplicationListener<ApplicationReadyEvent> {
 
@@ -44,13 +44,13 @@ class BulkheadClient implements ApplicationListener<ApplicationReadyEvent> {
 				+ " in the default thread pool");
 		var immediate = Schedulers.immediate();
 		for (var i = 0; i < availableProcessors; i++) {
-			buildRequest(immediate, i);
+			buildRequest(immediate, i).subscribe();
 		}
 	}
 
-	private void buildRequest(Scheduler immediate, int i) {
+	private Mono<String> buildRequest(Scheduler immediate, int i) {
 		log.info("attempting #" + i);
-		GreetingClientUtils //
+		return GreetingClientUtils //
 				.getGreetingFor(this.http, this.uid, "ok") //
 				.transform(BulkheadOperator.of(this.bulkhead)) //
 				.subscribeOn(immediate)//
@@ -61,8 +61,7 @@ class BulkheadClient implements ApplicationListener<ApplicationReadyEvent> {
 							+ throwable.getClass().getName() + '.');
 					return Mono.empty();
 				}) //
-				.onErrorStop() //
-				.subscribe();
+				.onErrorStop();
 	}
 
 }
