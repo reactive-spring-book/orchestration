@@ -267,7 +267,7 @@ class SecurityConfiguration {
 
 }
 
-// @Profile("rl")
+@Profile("rl")
 @Configuration
 class RateLimiterConfiguration {
 
@@ -278,12 +278,16 @@ class RateLimiterConfiguration {
 
 	@Bean
 	RouteLocator gateway(RouteLocatorBuilder rlb) {
-		return rlb.routes()
-				.route(routeSpec -> routeSpec.path("/").filters(fs -> fs.setPath("/ok") //
+		return rlb.routes().route(routeSpec -> routeSpec //
+				.path("/") //
+				.filters(fs -> fs //
+						.setPath("/ok") //
 						.requestRateLimiter(rl -> rl //
 								.setRateLimiter(redisRateLimiter()) //
 								.setKeyResolver(new PrincipalNameKeyResolver()) //
-				)).uri("lb://error-service")).build();
+				)) //
+				.uri("lb://error-service")) //
+				.build();
 	}
 
 }
