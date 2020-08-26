@@ -24,12 +24,15 @@ public class ErrorServiceApplication {
 	private final Map<String, AtomicInteger> clientCounts = new ConcurrentHashMap<>();
 
 	private int registerClient(String uid) {
-		this.clientCounts.putIfAbsent(uid, new AtomicInteger(0));
-		return this.clientCounts.get(uid).incrementAndGet();
+		if (null != uid) {
+			this.clientCounts.putIfAbsent(uid, new AtomicInteger(0));
+			return this.clientCounts.get(uid).incrementAndGet();
+		}
+		return 1;
 	}
 
 	@GetMapping("/ok")
-	Mono<Map<String, String>> okEndpoint(@RequestParam String uid) {
+	Mono<Map<String, String>> okEndpoint(@RequestParam(required = false) String uid) {
 		var countThusFar = this.registerClient(uid);
 		return Mono.just(Map.of("greeting", String.format(
 				"greeting attempt # %s from port %s", countThusFar, this.port.get())));
