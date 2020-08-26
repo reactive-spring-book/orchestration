@@ -11,6 +11,8 @@ import org.springframework.cloud.client.discovery.event.ParentHeartbeatEvent;
 import org.springframework.cloud.context.scope.refresh.RefreshScopeRefreshedEvent;
 import org.springframework.cloud.gateway.event.RefreshRoutesEvent;
 import org.springframework.cloud.gateway.event.RefreshRoutesResultEvent;
+import org.springframework.cloud.gateway.filter.ratelimit.PrincipalNameKeyResolver;
+import org.springframework.cloud.gateway.filter.ratelimit.RedisRateLimiter;
 import org.springframework.cloud.gateway.route.CachingRouteLocator;
 import org.springframework.cloud.gateway.route.Route;
 import org.springframework.cloud.gateway.route.RouteLocator;
@@ -24,6 +26,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpHeaders;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.userdetails.MapReactiveUserDetailsService;
 import org.springframework.security.core.userdetails.User;
@@ -131,36 +134,36 @@ class ProxyFiltersConfiguration {
 				.route(routeSpec -> routeSpec.path("/").filters(fs -> fs.setPath("/ok")//
 						.retry(10) //
 						.addRequestParameter("uid", UUID.randomUUID().toString())// this
-																					// has
-																					// the
-																					// effect
-																					// of
-																					// sending
-																					// all
-																					// requests
-																					// to
-																					// the
-																					// downstram
-																					// endpoint
-																					// with
-																					// the
-																					// same
-																					// client
-																					// ID.
-																					// no
-																					// reason
-																					// this
-																					// couldnt
-																					// be
-																					// dynamic.
-																					// but
-																					// now
-																					// seemingly
-																					// stateless
-																					// values
-																					// have
-																					// state.
-																					// yay!
+						// has
+						// the
+						// effect
+						// of
+						// sending
+						// all
+						// requests
+						// to
+						// the
+						// downstram
+						// endpoint
+						// with
+						// the
+						// same
+						// client
+						// ID.
+						// no
+						// reason
+						// this
+						// couldnt
+						// be
+						// dynamic.
+						// but
+						// now
+						// seemingly
+						// stateless
+						// values
+						// have
+						// state.
+						// yay!
 						.addRequestHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*")//
 						.filter((exchange, chain) -> { //
 							var uri = exchange.getRequest().getURI();//
@@ -178,6 +181,7 @@ class ProxyFiltersConfiguration {
 }
 
 @Log4j2
+@Profile("events")
 @Configuration
 class EventsConfiguration {
 
@@ -247,13 +251,39 @@ class SecurityConfiguration {
 
 	@Bean
 	SecurityWebFilterChain authorization(ServerHttpSecurity http) {
-		return http.authorizeExchange(ae -> ae.anyExchange().permitAll()).build();
+		return http.httpBasic(c -> Customizer.withDefaults()) //
+				.csrf(ServerHttpSecurity.CsrfSpec::disable) //
+				.authorizeExchange(ae -> ae //
+						.pathMatchers("/rl").authenticated() //
+						.anyExchange().permitAll()) //
+				.build();
 	}
 
 	@Bean
 	MapReactiveUserDetailsService authentication() {
 		return new MapReactiveUserDetailsService(User.withDefaultPasswordEncoder()
 				.username("jlong").password("pw").roles("USER").build());
+	}
+
+}
+
+// @Profile("rl")
+@Configuration
+class RateLimiterConfiguration {
+
+	@Bean
+	RedisRateLimiter redisRateLimiter() {
+		return new RedisRateLimiter(5, 7);
+	}
+
+	@Bean
+	RouteLocator gateway(RouteLocatorBuilder rlb) {
+		return rlb.routes()
+				.route(routeSpec -> routeSpec.path("/").filters(fs -> fs.setPath("/ok") //
+						.requestRateLimiter(rl -> rl //
+								.setRateLimiter(redisRateLimiter()) //
+								.setKeyResolver(new PrincipalNameKeyResolver()) //
+				)).uri("lb://error-service")).build();
 	}
 
 }
