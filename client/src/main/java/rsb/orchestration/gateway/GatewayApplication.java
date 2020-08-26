@@ -134,36 +134,6 @@ class ProxyFiltersConfiguration {
 				.route(routeSpec -> routeSpec.path("/").filters(fs -> fs.setPath("/ok")//
 						.retry(10) //
 						.addRequestParameter("uid", UUID.randomUUID().toString())// this
-						// has
-						// the
-						// effect
-						// of
-						// sending
-						// all
-						// requests
-						// to
-						// the
-						// downstram
-						// endpoint
-						// with
-						// the
-						// same
-						// client
-						// ID.
-						// no
-						// reason
-						// this
-						// couldnt
-						// be
-						// dynamic.
-						// but
-						// now
-						// seemingly
-						// stateless
-						// values
-						// have
-						// state.
-						// yay!
 						.addRequestHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*")//
 						.filter((exchange, chain) -> { //
 							var uri = exchange.getRequest().getURI();//
@@ -278,15 +248,17 @@ class RateLimiterConfiguration {
 
 	@Bean
 	RouteLocator gateway(RouteLocatorBuilder rlb) {
-		return rlb.routes().route(routeSpec -> routeSpec //
-				.path("/") //
-				.filters(fs -> fs //
-						.setPath("/ok") //
-						.requestRateLimiter(rl -> rl //
-								.setRateLimiter(redisRateLimiter()) //
-								.setKeyResolver(new PrincipalNameKeyResolver()) //
-				)) //
-				.uri("lb://error-service")) //
+		return rlb //
+				.routes() //
+				.route(routeSpec -> routeSpec //
+						.path("/") //
+						.filters(fs -> fs //
+								.setPath("/ok") //
+								.requestRateLimiter(rl -> rl //
+										.setRateLimiter(redisRateLimiter()) //
+										.setKeyResolver(new PrincipalNameKeyResolver()) //
+						)) //
+						.uri("lb://error-service")) //
 				.build();
 	}
 
