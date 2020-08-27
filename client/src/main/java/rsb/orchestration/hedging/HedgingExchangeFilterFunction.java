@@ -34,7 +34,8 @@ class HedgingExchangeFilterFunction implements ExchangeFilterFunction {
 		var apiName = requestUrl.getHost();
 		return this.reactiveDiscoveryClient //
 				.getInstances(apiName) //
-				.collectList().map(HedgingExchangeFilterFunction::shuffle)
+				.collectList()//
+				.map(HedgingExchangeFilterFunction::shuffle)//
 				.flatMapMany(Flux::fromIterable).take(maxNodes)
 				.map(si -> buildUriFromServiceInstance(si, requestUrl)) //
 				.map(URI::create) //
