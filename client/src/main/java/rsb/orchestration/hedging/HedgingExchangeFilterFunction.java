@@ -41,12 +41,7 @@ class HedgingExchangeFilterFunction implements ExchangeFilterFunction {
 				.map(uri -> invoke(uri, clientRequest, exchangeFunction)) //
 				.collectList() //
 				.flatMap(list -> Flux.first(list)
-						.timeout(Duration.ofSeconds(timeoutInSeconds)).singleOrEmpty()) //
-				.doOnTerminate(() -> {
-					if (log.isDebugEnabled()) {
-						log.debug("finished the hedging chain for " + apiName + '.');
-					}
-				});
+						.timeout(Duration.ofSeconds(timeoutInSeconds)).singleOrEmpty());
 	}
 
 	/*
