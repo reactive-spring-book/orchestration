@@ -25,16 +25,24 @@ class HedgingExchangeFilterFunction implements ExchangeFilterFunction {
 
 	private final int maxNodes;
 
+	/*
+	 * todo check if the key exists in a concurrent skip list set (uniqueHosts) and if it
+	 * does, return Mono.empty() todo change the condition to check not responses.size()
+	 * but check uniqueHosts.size() todo change the map to return Mono.empty() if the key
+	 * already exists in the set todo change the next line to filter the non-empty
+	 * elements todo use ReactiveDiscoveryClient.getInstances().take(n) which returns a
+	 * Flux<ServiceInstance>
+	 */
 	@Override
 	public Mono<ClientResponse> filter(ClientRequest clientRequest,
 			ExchangeFunction exchangeFunction) {
 		var requestUrl = clientRequest.url();
 		var apiName = requestUrl.getHost();
-		var api = serviceInstanceFactory.getInstance(apiName);
+		var apiLoadBalancer = serviceInstanceFactory.getInstance(apiName);
 		var responses = new ArrayList<Mono<ClientResponse>>();
 		while (responses.size() < maxNodes) {
 			var clientResponse = Mono//
-					.from(api.choose())//
+					.from(apiLoadBalancer.choose())//
 					.map(responseServiceInstance -> {
 						var server = responseServiceInstance.getServer();
 						var key = (requestUrl.getScheme() + "://" + server.getHost() + ':'

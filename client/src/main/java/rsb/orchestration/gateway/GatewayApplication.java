@@ -5,12 +5,18 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.context.WebServerInitializedEvent;
+import org.springframework.cloud.client.discovery.ReactiveDiscoveryClient;
 import org.springframework.cloud.client.discovery.event.HeartbeatEvent;
 import org.springframework.cloud.client.discovery.event.InstanceRegisteredEvent;
 import org.springframework.cloud.client.discovery.event.ParentHeartbeatEvent;
 import org.springframework.cloud.context.scope.refresh.RefreshScopeRefreshedEvent;
+import org.springframework.cloud.gateway.discovery.DiscoveryClientRouteDefinitionLocator;
+import org.springframework.cloud.gateway.discovery.DiscoveryLocatorProperties;
 import org.springframework.cloud.gateway.event.RefreshRoutesEvent;
 import org.springframework.cloud.gateway.event.RefreshRoutesResultEvent;
+import org.springframework.cloud.gateway.filter.GatewayFilter;
+import org.springframework.cloud.gateway.filter.GatewayFilterChain;
+import org.springframework.cloud.gateway.filter.factory.SetPathGatewayFilterFactory;
 import org.springframework.cloud.gateway.filter.ratelimit.PrincipalNameKeyResolver;
 import org.springframework.cloud.gateway.filter.ratelimit.RedisRateLimiter;
 import org.springframework.cloud.gateway.route.CachingRouteLocator;
@@ -18,6 +24,7 @@ import org.springframework.cloud.gateway.route.Route;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.RouteRefreshListener;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
+import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
@@ -26,6 +33,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.userdetails.MapReactiveUserDetailsService;
@@ -34,7 +42,9 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.StreamUtils;
+import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -43,8 +53,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
+/*
+ *
+ * Things to Demonstrate YAML refreshable routes? custom RouteLocator?
+ */
 @Log4j2
 @SpringBootApplication
 public class GatewayApplication {
@@ -72,6 +87,7 @@ class BrowserLauncher implements ApplicationListener<WebServerInitializedEvent> 
 						+ " besides macOS and if you don't have Google Chrome installed on macOS!");
 		var port = event.getWebServer().getPort();
 		var url = "http://localhost:" + port + "/";
+		log.info("trying to open " + url);
 		var exec = Runtime.getRuntime()
 				.exec(new String[] { "open", "-n",
 						googleChromeAppInstallations[0].getName(), url }, new String[] {},
@@ -130,22 +146,32 @@ class ProxyFiltersConfiguration {
 
 	@Bean
 	RouteLocator gateway(RouteLocatorBuilder rlb) {
-		return rlb.routes()
-				.route(routeSpec -> routeSpec.path("/").filters(fs -> fs.setPath("/ok")//
-						.retry(10) //
-						.addRequestParameter("uid", UUID.randomUUID().toString())// this
-						.addRequestHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*")//
-						.filter((exchange, chain) -> { //
-							var uri = exchange.getRequest().getURI();//
-							return chain.filter(exchange)
-									.doOnSubscribe(sub -> log.info("before: " + uri))
-									.doOnEach(signal -> log.info("processing: " + uri))
-									.doOnTerminate(() -> log.info("after: " + uri + ". "
-											+ "The response status code was "
-											+ exchange.getResponse().getStatusCode()
-											+ '.'));
-						})//
-				).uri("lb://error-service")).build();
+		return rlb.routes() ///
+				.route(routeSpec -> routeSpec//
+						.path("/")//
+						.filters(fs -> fs//
+								.setPath("/ok")//
+								.retry(10) //
+								.addRequestParameter("uid", UUID.randomUUID().toString())// this
+								.addRequestHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN,
+										"*")//
+								.filter((exchange, chain) -> { //
+									var uri = exchange.getRequest().getURI();//
+									return chain.filter(exchange)
+											.doOnSubscribe(
+													sub -> log.info("before: " + uri))
+											.doOnEach(signal -> log
+													.info("processing: " + uri))
+											.doOnTerminate(() -> log.info("after: " + uri
+													+ ". "
+													+ "The response status code was "
+													+ exchange.getResponse()
+															.getStatusCode()
+													+ '.'));
+								})//
+						)//
+						.uri("lb://error-service"))//
+				.build();
 	}
 
 }
@@ -221,7 +247,8 @@ class SecurityConfiguration {
 
 	@Bean
 	SecurityWebFilterChain authorization(ServerHttpSecurity http) {
-		return http.httpBasic(c -> Customizer.withDefaults()) //
+		return http //
+				.httpBasic(c -> Customizer.withDefaults()) //
 				.csrf(ServerHttpSecurity.CsrfSpec::disable) //
 				.authorizeExchange(ae -> ae //
 						.pathMatchers("/rl").authenticated() //
@@ -233,6 +260,94 @@ class SecurityConfiguration {
 	MapReactiveUserDetailsService authentication() {
 		return new MapReactiveUserDetailsService(User.withDefaultPasswordEncoder()
 				.username("jlong").password("pw").roles("USER").build());
+	}
+
+}
+
+@Log4j2
+@Configuration
+@Profile("custom-route-locator")
+class SimpleCustomRouteLocatorConfiguration {
+
+	@Bean
+	RouteLocator customGatewayRouteLocator() {
+
+		var singleRoute = Route.async() //
+				.id("spring-io-guides")
+				.asyncPredicate(serverWebExchange -> Mono.just(true)) // match all
+																		// incoming
+																		// requests
+				.uri("https://spring.io/guides").build();
+
+		return () -> Flux.just(singleRoute);
+	}
+
+}
+
+@Log4j2
+@Configuration
+@Profile("custom-route-locator-2")
+class RoutesConfiguration {
+
+	private boolean isValid(String s) {
+		return (s != null && s.equals("/")) || (s != null && s.equals(""));
+	}
+
+	private final GatewayFilter timer = (exchange, chain) -> {
+		var start = new AtomicLong();
+		return chain.filter(exchange).doOnSubscribe((s) -> {
+			start.set(System.nanoTime());
+			log.info("exchange before: ");
+		}).doOnTerminate(
+				() -> log.info("exchange after: " + (System.nanoTime() - start.get())));
+	};
+
+	@Bean
+	// todo why doesnt this bring up /guides?
+	RouteLocator customGatewayRouteLocator(
+			SetPathGatewayFilterFactory setPathGatewayFilterFactory) {
+
+		var setPathGatewayFilter = setPathGatewayFilterFactory
+				.apply(config -> config.setTemplate("/about.html"));
+
+		var gf = new GatewayFilter() {
+			@Override
+			public Mono<Void> filter(ServerWebExchange exchange,
+					GatewayFilterChain chain) {
+				var req = exchange.getRequest();
+				ServerWebExchangeUtils.addOriginalRequestUrl(exchange, req.getURI());
+				var newPath = "/guides";
+				var request = req.mutate().path(newPath).build();
+				exchange.getAttributes().put(
+						ServerWebExchangeUtils.GATEWAY_REQUEST_URL_ATTR,
+						request.getURI());
+				return chain.filter(exchange.mutate().request(request).build());
+			}
+		};
+
+		var singleRoute = Route.async() //
+				.id("spring-io-guides")
+				.asyncPredicate(serverWebExchange -> Mono.just(true)) // match all
+																		// incoming
+																		// requests
+				.filter(gf) // use the filters
+				.uri("https://spring.io/") // forward the request to the downstream
+											// service endpoint
+				.build();
+
+		return () -> Flux.just(singleRoute);
+	}
+
+}
+
+@Configuration
+@Profile("discovery-routes")
+class DiscoveryClientRoutesConfiguration {
+
+	@Bean
+	DiscoveryClientRouteDefinitionLocator discoveryClientRouteDefinitionLocator(
+			ReactiveDiscoveryClient dc, DiscoveryLocatorProperties properties) {
+		return new DiscoveryClientRouteDefinitionLocator(dc, properties);
 	}
 
 }
@@ -263,15 +378,3 @@ class RateLimiterConfiguration {
 	}
 
 }
-
-/*
- *
- * Things to Demonstrate
- *
- * routes predicates uris filters // rate limiters modify headers // events YAML
- * refreshable routes? custom RouteLocator?
- *
- *
- *
- *
- */

@@ -46,7 +46,6 @@ class CircuitBreakerClient implements ApplicationListener<ApplicationReadyEvent>
 	public void onApplicationEvent(ApplicationReadyEvent event) {
 
 		buildRequest() //
-				.transformDeferred(CircuitBreakerOperator.of(this.circuitBreaker)) //
 				.doOnError(ex -> {
 					if (ex instanceof WebClientResponseException.InternalServerError) {
 						log.error("oops! We got a " + ex.getClass().getSimpleName()
