@@ -6,18 +6,13 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.client.discovery.ReactiveDiscoveryClient;
 import org.springframework.cloud.client.loadbalancer.reactive.ReactiveLoadBalancer;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.reactive.function.client.WebClient;
 import rsb.orchestration.GreetingResponse;
 
-/**
- * Make sure to start `eureka-service` and at least three instances of `customer-service`
- * <p>
- * TODO: introduce some delay in the `customer-service` to simulate the benefits of
- * hedging
- */
 @Log4j2
 @SpringBootApplication
 public class HedgingApplication {
@@ -36,9 +31,8 @@ public class HedgingApplication {
 
 	@Bean
 	HedgingExchangeFilterFunction hedgingExchangeFilterFunction(
-			@Value("${rsb.lb.max-nodes:3}") int maxNodes,
-			ReactiveLoadBalancer.Factory<ServiceInstance> rlb) {
-		return new HedgingExchangeFilterFunction(rlb, maxNodes);
+			@Value("${rsb.lb.max-nodes:3}") int maxNodes, ReactiveDiscoveryClient rdc) {
+		return new HedgingExchangeFilterFunction(rdc, maxNodes);
 	}
 
 	@Bean
