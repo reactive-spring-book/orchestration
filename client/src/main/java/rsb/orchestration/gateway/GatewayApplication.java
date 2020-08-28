@@ -14,8 +14,7 @@ import org.springframework.cloud.gateway.discovery.DiscoveryClientRouteDefinitio
 import org.springframework.cloud.gateway.discovery.DiscoveryLocatorProperties;
 import org.springframework.cloud.gateway.event.RefreshRoutesEvent;
 import org.springframework.cloud.gateway.event.RefreshRoutesResultEvent;
-import org.springframework.cloud.gateway.filter.GatewayFilter;
-import org.springframework.cloud.gateway.filter.GatewayFilterChain;
+import org.springframework.cloud.gateway.filter.OrderedGatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.SetPathGatewayFilterFactory;
 import org.springframework.cloud.gateway.filter.ratelimit.PrincipalNameKeyResolver;
 import org.springframework.cloud.gateway.filter.ratelimit.RedisRateLimiter;
@@ -24,7 +23,6 @@ import org.springframework.cloud.gateway.route.Route;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.RouteRefreshListener;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
-import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
@@ -33,7 +31,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.userdetails.MapReactiveUserDetailsService;
@@ -42,7 +39,6 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.StreamUtils;
-import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -53,7 +49,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 /*
@@ -205,10 +200,11 @@ class EventsConfiguration {
 		log.info("this event is published first whenever anything "
 				+ "in the world could change our world view of available service registry routes. It is itself a "
 				+ "sort of meta event that tells us when any of several useful other events are published including ("
-				+ List.of(ContextRefreshedEvent.class, RefreshScopeRefreshedEvent.class,
+				+ List.of(//
+						ContextRefreshedEvent.class, RefreshScopeRefreshedEvent.class,
 						InstanceRegisteredEvent.class, ParentHeartbeatEvent.class,
-						HeartbeatEvent.class).stream().map(Class::getSimpleName)
-						.collect(Collectors.joining(","))
+						HeartbeatEvent.class //
+				).stream().map(Class::getSimpleName).collect(Collectors.joining(","))
 				+ ")");
 		Assert.state(source instanceof RouteRefreshListener);
 	}
@@ -266,73 +262,17 @@ class SecurityConfiguration {
 
 @Log4j2
 @Configuration
-@Profile("custom-route-locator")
-class SimpleCustomRouteLocatorConfiguration {
+@Profile("proxy-route-locator")
+class SimpleProxyCustomRouteLocatorConfiguration {
 
 	@Bean
-	RouteLocator customGatewayRouteLocator() {
+	RouteLocator proxyAllOfSpringIo() {
 
-		var singleRoute = Route.async() //
-				.id("spring-io-guides")
-				.asyncPredicate(serverWebExchange -> Mono.just(true)) // match all
-																		// incoming
-																		// requests
-				.uri("https://spring.io/guides").build();
-
-		return () -> Flux.just(singleRoute);
-	}
-
-}
-
-@Log4j2
-@Configuration
-@Profile("custom-route-locator-2")
-class RoutesConfiguration {
-
-	private boolean isValid(String s) {
-		return (s != null && s.equals("/")) || (s != null && s.equals(""));
-	}
-
-	private final GatewayFilter timer = (exchange, chain) -> {
-		var start = new AtomicLong();
-		return chain.filter(exchange).doOnSubscribe((s) -> {
-			start.set(System.nanoTime());
-			log.info("exchange before: ");
-		}).doOnTerminate(
-				() -> log.info("exchange after: " + (System.nanoTime() - start.get())));
-	};
-
-	@Bean
-	// todo why doesnt this bring up /guides?
-	RouteLocator customGatewayRouteLocator(
-			SetPathGatewayFilterFactory setPathGatewayFilterFactory) {
-
-		var setPathGatewayFilter = setPathGatewayFilterFactory
-				.apply(config -> config.setTemplate("/about.html"));
-
-		var gf = new GatewayFilter() {
-			@Override
-			public Mono<Void> filter(ServerWebExchange exchange,
-					GatewayFilterChain chain) {
-				var req = exchange.getRequest();
-				ServerWebExchangeUtils.addOriginalRequestUrl(exchange, req.getURI());
-				var newPath = "/guides";
-				var request = req.mutate().path(newPath).build();
-				exchange.getAttributes().put(
-						ServerWebExchangeUtils.GATEWAY_REQUEST_URL_ATTR,
-						request.getURI());
-				return chain.filter(exchange.mutate().request(request).build());
-			}
-		};
-
-		var singleRoute = Route.async() //
-				.id("spring-io-guides")
-				.asyncPredicate(serverWebExchange -> Mono.just(true)) // match all
-																		// incoming
-																		// requests
-				.filter(gf) // use the filters
-				.uri("https://spring.io/") // forward the request to the downstream
-											// service endpoint
+		var singleRoute = Route//
+				.async() //
+				.id("spring-io") //
+				.asyncPredicate(serverWebExchange -> Mono.just(true)) //
+				.uri("https://spring.io") //
 				.build();
 
 		return () -> Flux.just(singleRoute);
@@ -340,6 +280,43 @@ class RoutesConfiguration {
 
 }
 
+@Log4j2
+@Profile("discovery-routes")
+@Configuration
+class RoutesConfiguration {
+
+	@Bean
+	RouteLocator customGatewayRouteLocator(
+			SetPathGatewayFilterFactory setPathGatewayFilterFactory) {
+
+		var setPathGatewayFilter = setPathGatewayFilterFactory
+				.apply(config -> config.setTemplate("/guides"));
+		var orderedGatewayFilter = new OrderedGatewayFilter(setPathGatewayFilter, 0); // this
+																						// is
+																						// very
+																						// important!
+																						// MUST
+																						// wrap
+																						// GWs
+																						// in
+																						// OrderedGatewayFilter
+
+		var singleRoute = Route//
+				.async() //
+				.id("spring-io-guides")
+				.asyncPredicate(serverWebExchange -> Mono.just(true))
+				.filter(orderedGatewayFilter).uri("https://spring.io/").build();
+
+		return () -> Flux.just(singleRoute);
+	}
+
+}
+
+/**
+ * This should automatically register GW routes based on the routes discovered in the
+ * service registry. There's also a property i could use instead of registering this bean!
+ * The property is more natural to show! Show that first.
+ */
 @Configuration
 @Profile("discovery-routes")
 class DiscoveryClientRoutesConfiguration {
