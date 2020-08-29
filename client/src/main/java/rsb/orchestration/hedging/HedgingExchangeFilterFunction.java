@@ -36,7 +36,8 @@ class HedgingExchangeFilterFunction implements ExchangeFilterFunction {
 				.getInstances(apiName) //
 				.collectList()//
 				.map(HedgingExchangeFilterFunction::shuffle)//
-				.flatMapMany(Flux::fromIterable).take(maxNodes)
+				.flatMapMany(Flux::fromIterable)//
+				.take(maxNodes)//
 				.map(si -> buildUriFromServiceInstance(si, requestUrl)) //
 				.map(URI::create) //
 				.map(uri -> invoke(uri, clientRequest, exchangeFunction)) //

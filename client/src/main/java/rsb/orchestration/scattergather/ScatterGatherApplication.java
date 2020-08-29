@@ -1,20 +1,20 @@
 package rsb.orchestration.scattergather;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.cloud.client.loadbalancer.reactive.ReactorLoadBalancerExchangeFilterFunction;
 import org.springframework.context.ApplicationListener;
-import org.springframework.context.annotation.Bean;
-import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import rsb.orchestration.Customer;
 import rsb.orchestration.Order;
 import rsb.orchestration.Profile;
+import rsb.orchestration.TimerUtils;
 
-import java.util.concurrent.atomic.AtomicLong;
+import static rsb.orchestration.TimerUtils.cache;
 
 /**
  * This makes use of several interesting qualities:
@@ -34,52 +34,46 @@ public class ScatterGatherApplication {
 		SpringApplication.run(ScatterGatherApplication.class, args);
 	}
 
-	@Bean
-	WebClient client(WebClient.Builder builder,
-			ReactorLoadBalancerExchangeFilterFunction lbFunction) {
-		return builder.filter(lbFunction).build();
-	}
+}
 
-	@Bean
-	ApplicationListener<ApplicationReadyEvent> scatterGatherClient(CrmClient client) {
-		return event -> {
-			Integer[] ids = { 1, 2, 7, 5 };
-			Flux<Customer> customerFlux = ensureCached(client.getCustomers(ids));
-			Flux<Order> ordersFlux = ensureCached(client.getOrders(ids));
-			Flux<CustomerOrders> customerOrdersFlux = customerFlux//
-					.flatMap(customer -> {
-						Flux<Order> filteredOrdersFlux = ordersFlux
-								.filter(o -> o.getCustomerId().equals(customer.getId()));
-						Mono<Profile> profileMono = client.getProfile(customer.getId());
-						Mono<Customer> customerMono = Mono.just(customer);
-						return Flux.zip(customerMono, filteredOrdersFlux.collectList(),
-								profileMono);
-					})//
-					.map(tuple -> new CustomerOrders(tuple.getT1(), tuple.getT2(),
-							tuple.getT3()));
+@Log4j2
+@RequiredArgsConstructor
+@Component
+class ScatterGather implements ApplicationListener<ApplicationReadyEvent> {
 
-			for (var i = 0; i < 5; i++) // it gets faster after successive runs
-				run(customerOrdersFlux);
-		};
+	private final CrmClient client;
+
+	@Override
+	public void onApplicationEvent(ApplicationReadyEvent event) {
+		var ids = new Integer[] { 1, 2, 7, 5 };
+		Flux<Customer> customerFlux = cache(client.getCustomers(ids));
+		Flux<Order> ordersFlux = cache(client.getOrders(ids));
+		Flux<CustomerOrders> customerOrdersFlux = customerFlux//
+				.flatMap(customer -> {
+					Flux<Order> filteredOrdersFlux = ordersFlux
+							.filter(o -> o.getCustomerId().equals(customer.getId()));
+					Mono<Profile> profileMono = client.getProfile(customer.getId());
+					Mono<Customer> customerMono = Mono.just(customer);
+					return Flux.zip(customerMono, filteredOrdersFlux.collectList(),
+							profileMono);
+				})//
+				.map(tuple -> new CustomerOrders(tuple.getT1(), tuple.getT2(),
+						tuple.getT3()));
+
+		for (var i = 0; i < 5; i++) // it gets faster after successive runs
+			run(customerOrdersFlux);
 	}
 
 	private void run(Flux<CustomerOrders> customerOrdersFlux) {
-		var start = new AtomicLong();
-		customerOrdersFlux//
-				.doOnSubscribe(sub -> start.set(System.currentTimeMillis()))//
-				.doOnComplete(() -> log.info("request duration: "
-						+ (System.currentTimeMillis() - start.get())))//
+
+		TimerUtils.monitor(customerOrdersFlux)//
 				.subscribe(customerOrder -> {
 					log.info("---------------");
-					log.info(customerOrder.getCustomer().toString());
-					log.info(customerOrder.getProfile().toString());
+					log.info(customerOrder.getCustomer());
+					log.info(customerOrder.getProfile());
 					customerOrder.getOrders().forEach(order -> log
 							.info(customerOrder.getCustomer().getId() + ": " + order));
 				});
-	}
-
-	private <T> Flux<T> ensureCached(Flux<T> in) {
-		return in.doOnNext(c -> log.debug("receiving " + c.toString())).cache();
 	}
 
 }

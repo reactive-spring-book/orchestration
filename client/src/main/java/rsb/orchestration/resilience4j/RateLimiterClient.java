@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Log4j2
 @Component
-@Profile("rl")
+// @Profile("rl")
 @RequiredArgsConstructor
 class RateLimiterClient implements ApplicationListener<ApplicationReadyEvent> {
 

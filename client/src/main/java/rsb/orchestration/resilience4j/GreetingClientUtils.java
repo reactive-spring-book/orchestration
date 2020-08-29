@@ -6,7 +6,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
+
+import static rsb.orchestration.TimerUtils.monitor;
 
 @Log4j2
 abstract class GreetingClientUtils {
@@ -21,15 +22,6 @@ abstract class GreetingClientUtils {
 				.bodyToMono(parameterizedTypeReference)//
 				.map(map -> map.get("greeting"));
 		return monitor(monoFromHttpCall);
-	}
-
-	private static Mono<String> monitor(Mono<String> configMono) {
-		var start = new AtomicLong();
-		return configMono//
-				.doOnError(exception -> log.error("oops!", exception))//
-				.doOnSubscribe((subscription) -> start.set(System.currentTimeMillis())) //
-				.doOnNext((greeting) -> log.info("total time: {}",
-						System.currentTimeMillis() - start.get()));
 	}
 
 }

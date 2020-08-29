@@ -4,6 +4,7 @@ import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.web.context.WebServerInitializedEvent;
 import org.springframework.context.ApplicationListener;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.StreamUtils;
@@ -13,6 +14,7 @@ import java.nio.charset.Charset;
 
 @Log4j2
 @Component
+@Profile("chrome-on-macos")
 class BrowserLauncher implements ApplicationListener<WebServerInitializedEvent> {
 
 	@Override

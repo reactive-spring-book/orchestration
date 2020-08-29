@@ -1,4 +1,4 @@
-package rsb.orchestration.basics;
+package rsb.orchestration.reactor;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
