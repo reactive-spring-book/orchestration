@@ -15,7 +15,7 @@ import reactor.core.publisher.Mono;
 class SimpleProxyCustomRouteLocatorConfiguration {
 
 	@Bean
-    RouteLocator proxyAllOfSpringIo() {
+	RouteLocator proxyAllOfSpringIo() {
 
 		var singleRoute = Route//
 				.async() //

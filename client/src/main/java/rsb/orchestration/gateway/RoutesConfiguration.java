@@ -17,7 +17,7 @@ import reactor.core.publisher.Mono;
 class RoutesConfiguration {
 
 	@Bean
-    RouteLocator customGatewayRouteLocator(
+	RouteLocator customGatewayRouteLocator(
 			SetPathGatewayFilterFactory setPathGatewayFilterFactory) {
 
 		var setPathGatewayFilter = setPathGatewayFilterFactory

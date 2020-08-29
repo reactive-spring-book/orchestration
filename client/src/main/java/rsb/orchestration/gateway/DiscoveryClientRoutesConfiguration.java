@@ -17,8 +17,8 @@ import org.springframework.context.annotation.Profile;
 class DiscoveryClientRoutesConfiguration {
 
 	@Bean
-    DiscoveryClientRouteDefinitionLocator discoveryClientRouteDefinitionLocator(
-            ReactiveDiscoveryClient dc, DiscoveryLocatorProperties properties) {
+	DiscoveryClientRouteDefinitionLocator discoveryClientRouteDefinitionLocator(
+			ReactiveDiscoveryClient dc, DiscoveryLocatorProperties properties) {
 		return new DiscoveryClientRouteDefinitionLocator(dc, properties);
 	}
 

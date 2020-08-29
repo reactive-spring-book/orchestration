@@ -77,7 +77,7 @@ class EventsConfiguration {
 	}
 
 	@Bean
-    RouteLocator gateway(RouteLocatorBuilder rlb) {
+	RouteLocator gateway(RouteLocatorBuilder rlb) {
 		return rlb //
 				.routes() //
 				.route(routeSpec -> routeSpec //

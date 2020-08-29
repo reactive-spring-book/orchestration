@@ -20,7 +20,7 @@ class ProxyFiltersConfiguration {
 	private final Set<String> uids = new HashSet<>();
 
 	@Bean
-    RouteLocator gateway(RouteLocatorBuilder rlb) {
+	RouteLocator gateway(RouteLocatorBuilder rlb) {
 		return rlb.routes() ///
 				.route(routeSpec -> routeSpec//
 						.path("/")//

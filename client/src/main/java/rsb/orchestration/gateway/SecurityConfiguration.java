@@ -15,7 +15,7 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 class SecurityConfiguration {
 
 	@Bean
-    SecurityWebFilterChain authorization(ServerHttpSecurity http) {
+	SecurityWebFilterChain authorization(ServerHttpSecurity http) {
 		return http //
 				.httpBasic(c -> Customizer.withDefaults()) //
 				.csrf(ServerHttpSecurity.CsrfSpec::disable) //
@@ -26,7 +26,7 @@ class SecurityConfiguration {
 	}
 
 	@Bean
-    MapReactiveUserDetailsService authentication() {
+	MapReactiveUserDetailsService authentication() {
 		return new MapReactiveUserDetailsService(User.withDefaultPasswordEncoder()
 				.username("jlong").password("pw").roles("USER").build());
 	}

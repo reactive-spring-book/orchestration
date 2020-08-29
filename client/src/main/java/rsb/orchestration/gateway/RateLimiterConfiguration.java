@@ -13,12 +13,12 @@ import org.springframework.context.annotation.Profile;
 class RateLimiterConfiguration {
 
 	@Bean
-    RedisRateLimiter redisRateLimiter() {
+	RedisRateLimiter redisRateLimiter() {
 		return new RedisRateLimiter(5, 7);
 	}
 
 	@Bean
-    RouteLocator gateway(RouteLocatorBuilder rlb) {
+	RouteLocator gateway(RouteLocatorBuilder rlb) {
 		return rlb //
 				.routes() //
 				.route(routeSpec -> routeSpec //
