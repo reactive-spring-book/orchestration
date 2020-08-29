@@ -22,32 +22,3 @@ public class ProfileServiceApplication {
 	}
 
 }
-
-@RestController
-class ProfileRestController {
-
-	private final Map<Integer, Profile> profiles = Map
-			.of(1, "jane", 2, "mia", 3, "leroy", 4, "badhr", 5, "zhen", 6, "juliette", 7,
-					"artem", 8, "michelle", 9, "eva", 10, "richard")
-			.entrySet().stream()
-			.collect(Collectors.toConcurrentMap(Map.Entry::getKey,
-					e -> new Profile(e.getKey(), e.getValue(),
-							UUID.randomUUID().toString())));
-
-	@GetMapping("/profiles/{id}")
-	Mono<Profile> byId(@PathVariable Integer id) {
-		return Mono.just(this.profiles.get(id));
-	}
-
-}
-
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-class Profile {
-
-	private Integer id;
-
-	private String username, password;
-
-}
