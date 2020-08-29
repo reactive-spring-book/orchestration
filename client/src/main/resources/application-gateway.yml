@@ -5,8 +5,6 @@ spring:
     gateway:
       routes:
         - id: guides
-          uri: https://spring.io/
-          filters:
-            - SetPath=/guides
+          uri: https://spring.io
           predicates:
-            - Path=/
+            - After=2017-01-20T17:42:47.789-07:00[America/Denver]
