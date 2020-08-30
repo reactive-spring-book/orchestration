@@ -15,7 +15,7 @@ import java.util.UUID;
 @Log4j2
 @Profile("routes-filters")
 @Configuration
-class ProxyFiltersConfiguration {
+class FilterConfiguration {
 
 	@Bean
 	RouteLocator gateway(RouteLocatorBuilder rlb) {
@@ -26,8 +26,8 @@ class ProxyFiltersConfiguration {
 								.setPath("/forms/post")// <1>
 								.retry(10) // <2>
 								.addRequestParameter("uid", UUID.randomUUID().toString())// <3>
-								.addRequestHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN,
-										"*")// <4>
+								.addResponseHeader(
+										HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*")// <4>
 								.filter((exchange, chain) -> { // <5>
 									var uri = exchange.getRequest().getURI();//
 									return chain.filter(exchange) //

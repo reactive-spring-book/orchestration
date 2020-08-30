@@ -1,6 +1,5 @@
 package rsb.orchestration.gateway;
 
-import lombok.extern.log4j.Log4j2;
 import org.springframework.cloud.gateway.filter.OrderedGatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.SetPathGatewayFilterFactory;
 import org.springframework.cloud.gateway.route.Route;
@@ -11,28 +10,25 @@ import org.springframework.context.annotation.Profile;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-@Log4j2
-@Profile("discovery-routes")
+@Profile("custom-route-locator")
 @Configuration
-class RoutesConfiguration {
+class CustomRouteLocatorConfiguration {
 
 	@Bean
-	RouteLocator customGatewayRouteLocator(
-			SetPathGatewayFilterFactory setPathGatewayFilterFactory) {
-
+	RouteLocator customRouteLocator(
+			SetPathGatewayFilterFactory setPathGatewayFilterFactory) {// <1>
 		var setPathGatewayFilter = setPathGatewayFilterFactory
-				.apply(config -> config.setTemplate("/guides"));
-
-		// OrderedGatewayFilter *must* wrap GatewayFilters!
-		var orderedGatewayFilter = new OrderedGatewayFilter(setPathGatewayFilter, 0);
-
-		var singleRoute = Route//
+				.apply(config -> config.setTemplate("/guides")); // <2>
+		var orderedGatewayFilter = new OrderedGatewayFilter(setPathGatewayFilter, 0);// <3>
+		var singleRoute = Route// <4>
 				.async() //
-				.id("spring-io-guides")
-				.asyncPredicate(serverWebExchange -> Mono.just(true))
-				.filter(orderedGatewayFilter).uri("https://spring.io/").build();
+				.id("spring-io-guides") //
+				.asyncPredicate(serverWebExchange -> Mono.just(true)) //
+				.filter(orderedGatewayFilter) //
+				.uri("https://spring.io/") //
+				.build();
 
-		return () -> Flux.just(singleRoute);
+		return () -> Flux.just(singleRoute);// <5>
 	}
 
 }
