@@ -24,11 +24,13 @@ import java.util.UUID;
 class CircuitBreakerClient implements ApplicationListener<ApplicationReadyEvent> {
 
 	private final CircuitBreaker circuitBreaker = CircuitBreaker.of("greetings-cb",
-			CircuitBreakerConfig.custom().failureRateThreshold(50)
-					.waitDurationInOpenState(Duration.ofMillis(1000))
-					.permittedNumberOfCallsInHalfOpenState(2).slidingWindowSize(5)
+			CircuitBreakerConfig.custom()//
+					.failureRateThreshold(50)// <1>
 					.recordExceptions(
-							WebClientResponseException.InternalServerError.class)
+							WebClientResponseException.InternalServerError.class)// <2>
+					.slidingWindowSize(5)// <3>
+					.waitDurationInOpenState(Duration.ofMillis(1000))//
+					.permittedNumberOfCallsInHalfOpenState(2) //
 					.build());
 
 	private final WebClient http;

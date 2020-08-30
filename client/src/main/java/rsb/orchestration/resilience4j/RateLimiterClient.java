@@ -29,19 +29,22 @@ class RateLimiterClient implements ApplicationListener<ApplicationReadyEvent> {
 
 	private final WebClient http;
 
+	private final RateLimiter rateLimiter = RateLimiter.of("greetings-rl",
+			RateLimiterConfig//
+					.custom() //
+					.limitForPeriod(10)// <1>
+					.limitRefreshPeriod(Duration.ofSeconds(1))// <2>
+					.timeoutDuration(Duration.ofMillis(25))//
+					.build());
+
 	@SneakyThrows
 	@Override
 	public void onApplicationEvent(ApplicationReadyEvent event) {
 
-		var result = new AtomicInteger();
-		var errors = new AtomicInteger();
-		var rateLimiter = RateLimiter.of("greetings-rl",
-				RateLimiterConfig.custom().limitRefreshPeriod(Duration.ofSeconds(1))
-						.limitForPeriod(10).timeoutDuration(Duration.ofMillis(25))
-						.build());
-
 		var max = 20;
 		var cdl = new CountDownLatch(max);
+		var result = new AtomicInteger();
+		var errors = new AtomicInteger();
 		for (var i = 0; i < max; i++)
 			this.buildRequest(cdl, result, errors, rateLimiter, i).subscribe();
 

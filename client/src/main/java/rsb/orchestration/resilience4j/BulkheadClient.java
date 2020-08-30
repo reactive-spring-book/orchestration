@@ -34,7 +34,7 @@ class BulkheadClient implements ApplicationListener<ApplicationReadyEvent> {
 	private final Bulkhead bulkhead = Bulkhead.of("greetings-bulkhead", BulkheadConfig //
 			.custom() //
 			.writableStackTraceEnabled(true) //
-			.maxConcurrentCalls(this.maxCalls)//
+			.maxConcurrentCalls(this.maxCalls)// <1>
 			.maxWaitDuration(Duration.ofMillis(5)) //
 			.build());
 
