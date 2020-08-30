@@ -1,4 +1,4 @@
-package rsb.orchestration.hedging.filter;
+package rsb.orchestration.hedging;
 
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,8 +15,24 @@ import rsb.orchestration.GreetingResponse;
 @SpringBootApplication
 public class HedgingApplication {
 
+	// <1>
 	@Bean
-	ApplicationListener<ApplicationReadyEvent> hedge(WebClient client) {
+	HedgingExchangeFilterFunction hedgingExchangeFilterFunction(
+			@Value("${rsb.lb.max-nodes:3}") int maxNodes, ReactiveDiscoveryClient rdc) {
+		return new HedgingExchangeFilterFunction(rdc, maxNodes);
+	}
+
+	// <2>
+	@Bean
+	WebClient client(WebClient.Builder builder,
+			HedgingExchangeFilterFunction hedgingExchangeFilterFunction) {
+		return builder.filter(hedgingExchangeFilterFunction).build();
+	}
+
+	// <3>
+	@Bean
+	ApplicationListener<ApplicationReadyEvent> hedgingApplicationListener(
+			WebClient client) {
 		return event -> client//
 				.get()//
 				.uri("http://slow-service/greetings")//
@@ -25,18 +41,6 @@ public class HedgingApplication {
 				.doOnNext(log::info)//
 				.doOnError(ex -> log.info(ex.toString()))//
 				.subscribe();
-	}
-
-	@Bean
-	HedgingExchangeFilterFunction hedgingExchangeFilterFunction(
-			@Value("${rsb.lb.max-nodes:3}") int maxNodes, ReactiveDiscoveryClient rdc) {
-		return new HedgingExchangeFilterFunction(rdc, maxNodes);
-	}
-
-	@Bean
-	WebClient client(WebClient.Builder builder,
-			HedgingExchangeFilterFunction hedgingExchangeFilterFunction) {
-		return builder.filter(hedgingExchangeFilterFunction).build();
 	}
 
 	public static void main(String[] args) {

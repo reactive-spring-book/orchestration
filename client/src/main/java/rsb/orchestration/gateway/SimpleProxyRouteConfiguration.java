@@ -10,13 +10,13 @@ import org.springframework.context.annotation.Profile;
 @Profile("routes-simple")
 class SimpleProxyRouteConfiguration {
 
-	@Bean
+	@Bean // <1>
 	RouteLocator gateway(RouteLocatorBuilder rlb) {
-		return rlb.routes() //
-				.route(routeSpec -> routeSpec //
-						.path("/")//
-						.filters(fp -> fp.setPath("/guides")) //
-						.uri("http://spring.io") //
+		return rlb //
+				.routes()//
+				.route(routeSpec -> routeSpec // <2>
+						.alwaysTrue() // <3>
+						.uri("https://spring.io") // <4>
 				) //
 				.build();
 	}

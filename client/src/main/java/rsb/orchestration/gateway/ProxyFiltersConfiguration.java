@@ -17,22 +17,20 @@ import java.util.UUID;
 @Configuration
 class ProxyFiltersConfiguration {
 
-	private final Set<String> uids = new HashSet<>();
-
 	@Bean
 	RouteLocator gateway(RouteLocatorBuilder rlb) {
 		return rlb.routes() ///
 				.route(routeSpec -> routeSpec//
 						.path("/")//
 						.filters(fs -> fs//
-								.setPath("/ok")//
-								.retry(10) //
-								.addRequestParameter("uid", UUID.randomUUID().toString())// this
+								.setPath("/forms/post")// <1>
+								.retry(10) // <2>
+								.addRequestParameter("uid", UUID.randomUUID().toString())// <3>
 								.addRequestHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN,
-										"*")//
-								.filter((exchange, chain) -> { //
+										"*")// <4>
+								.filter((exchange, chain) -> { // <5>
 									var uri = exchange.getRequest().getURI();//
-									return chain.filter(exchange)
+									return chain.filter(exchange) //
 											.doOnSubscribe(
 													sub -> log.info("before: " + uri))
 											.doOnEach(signal -> log
@@ -45,7 +43,7 @@ class ProxyFiltersConfiguration {
 													+ '.'));
 								})//
 						)//
-						.uri("lb://error-service"))//
+						.uri("http://httpbin.org"))//
 				.build();
 	}
 
