@@ -4,20 +4,18 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
-import reactor.util.retry.Retry;
-
-import java.time.Duration;
+import reactor.core.publisher.Flux;
 
 @Component
 @RequiredArgsConstructor
-class RetryWhenClient implements ApplicationListener<ApplicationReadyEvent> {
+class DegradingClient implements ApplicationListener<ApplicationReadyEvent> {
 
 	private final OrderClient client;
 
 	@Override
 	public void onApplicationEvent(ApplicationReadyEvent event) {
 		this.client.getOrders(1, 2)//
-				.retryWhen(Retry.backoff(10, Duration.ofSeconds(1)))//
+				.onErrorResume(exception -> Flux.empty()) // <1>
 				.subscribe(System.out::println);
 	}
 

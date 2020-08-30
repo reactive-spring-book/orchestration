@@ -15,7 +15,8 @@ class TimeoutClient implements ApplicationListener<ApplicationReadyEvent> {
 
 	@Override
 	public void onApplicationEvent(ApplicationReadyEvent event) {
-		this.client.getOrders(1, 2).timeout(Duration.ofSeconds(10))
+		this.client.getOrders(1, 2)//
+				.timeout(Duration.ofSeconds(10))//
 				.subscribe(System.out::println);
 	}
 

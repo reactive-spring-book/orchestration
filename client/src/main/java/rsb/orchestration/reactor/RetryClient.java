@@ -13,7 +13,9 @@ class RetryClient implements ApplicationListener<ApplicationReadyEvent> {
 
 	@Override
 	public void onApplicationEvent(ApplicationReadyEvent event) {
-		this.client.getOrders(1, 2).retry(10).subscribe(System.out::println);
+		this.client.getOrders(1, 2)//
+				.retry(10)// <1>
+				.subscribe(System.out::println);
 
 	}
 

@@ -12,9 +12,7 @@ import rsb.orchestration.Order;
 import rsb.orchestration.Profile;
 import rsb.orchestration.TimerUtils;
 
-import java.sql.Time;
-
-import static rsb.orchestration.TimerUtils.cache;
+import java.util.List;
 
 @Log4j2
 @RequiredArgsConstructor
@@ -25,22 +23,31 @@ class ScatterGather implements ApplicationListener<ApplicationReadyEvent> {
 
 	@Override
 	public void onApplicationEvent(ApplicationReadyEvent event) {
-		var ids = new Integer[] { 1, 2, 7, 5 };
+		var ids = new Integer[] { 1, 2, 7, 5 }; // <1>
+		// <2>
 		Flux<Customer> customerFlux = TimerUtils.cache(client.getCustomers(ids));
 		Flux<Order> ordersFlux = TimerUtils.cache(client.getOrders(ids));
 		Flux<CustomerOrders> customerOrdersFlux = customerFlux//
-				.flatMap(customer -> {
-					Flux<Order> filteredOrdersFlux = ordersFlux
-							.filter(o -> o.getCustomerId().equals(customer.getId()));
+				.flatMap(customer -> { // <3>
+
+					// <4>
+					Mono<List<Order>> filteredOrdersFlux = ordersFlux //
+							.filter(o -> o.getCustomerId().equals(customer.getId()))//
+							.collectList();
+
+					// <5>
 					Mono<Profile> profileMono = client.getProfile(customer.getId());
+
+					// <6>
 					Mono<Customer> customerMono = Mono.just(customer);
-					return Flux.zip(customerMono, filteredOrdersFlux.collectList(),
-							profileMono);
-				})//
+
+					// <7>
+					return Flux.zip(customerMono, filteredOrdersFlux, profileMono);
+				})// <8>
 				.map(tuple -> new CustomerOrders(tuple.getT1(), tuple.getT2(),
 						tuple.getT3()));
 
-		for (var i = 0; i < 5; i++) // it gets faster after successive runs
+		for (var i = 0; i < 5; i++) // <9>
 			run(customerOrdersFlux);
 	}
 

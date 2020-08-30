@@ -18,24 +18,10 @@ import java.time.Instant;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
-/*
- * This measures how many requests we can make in a distinct period. I've configured
- * the RateLimiter to have a _very_ low threshold below. It'll allow no more than 10
- * requests for any given second. I want to test this so i've fired off 20 requests
- * which should -- all things being equal - have more than enough time to begin and
- * even return a response. If for whatever reason that's not the case, you can ramp
- * down the `limitForPeriod` value below or ramp up the `limitRefreshPeriod` value
- * from 1 second to 5 seconds. Ive then configured two atomic numbers to keep track of
- * either valid responses _or_ RequestNotPermitted responses. If we observe a valid
- * value then well increment the results counter, otherwise the errors counter.
- *
- * For more: people are advised to consider Spring Cloud Gateway's rate limiter and
- * the Alibaba Sentinel rate limiter.
- */
 
 @Log4j2
 @Component
-// @Profile("rl")
+@Profile("rl")
 @RequiredArgsConstructor
 class RateLimiterClient implements ApplicationListener<ApplicationReadyEvent> {
 

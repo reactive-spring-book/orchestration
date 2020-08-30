@@ -3,6 +3,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <packaging>jar</packaging>
+    <properties>
+        <resilience4j.version>1.3.1</resilience4j.version>
+    </properties>
     <artifactId>client</artifactId>
     <parent>
         <groupId>rsb</groupId>
@@ -28,27 +31,27 @@
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
         <dependency>
-            <version>1.3.1</version>
+            <version>${resilience4j.version}</version>
             <groupId>io.github.resilience4j</groupId>
             <artifactId>resilience4j-ratelimiter</artifactId>
         </dependency>
         <dependency>
-            <version>1.3.1</version>
+            <version>${resilience4j.version}</version>
             <groupId>io.github.resilience4j</groupId>
             <artifactId>resilience4j-circuitbreaker</artifactId>
         </dependency>
         <dependency>
-            <version>1.3.1</version>
+            <version>${resilience4j.version}</version>
             <groupId>io.github.resilience4j</groupId>
             <artifactId>resilience4j-retry</artifactId>
         </dependency>
         <dependency>
-            <version>1.3.1</version>
+            <version>${resilience4j.version}</version>
             <groupId>io.github.resilience4j</groupId>
             <artifactId>resilience4j-bulkhead</artifactId>
         </dependency>
         <dependency>
-            <version>1.3.1</version>
+            <version>${resilience4j.version}</version>
             <groupId>io.github.resilience4j</groupId>
             <artifactId>resilience4j-reactor</artifactId>
         </dependency>
