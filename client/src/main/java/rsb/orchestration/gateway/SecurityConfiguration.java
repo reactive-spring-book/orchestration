@@ -20,7 +20,7 @@ class SecurityConfiguration {
 				.httpBasic(c -> Customizer.withDefaults()) //
 				.csrf(ServerHttpSecurity.CsrfSpec::disable) //
 				.authorizeExchange(ae -> ae //
-						.pathMatchers("/rl").authenticated() //
+						.pathMatchers("/rl").authenticated() // <1>
 						.anyExchange().permitAll()) //
 				.build();
 	}
