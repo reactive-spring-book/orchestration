@@ -42,7 +42,7 @@ class HedgingExchangeFilterFunction implements ExchangeFilterFunction {
 				.map(uri -> invoke(uri, clientRequest, exchangeFunction)) // <7>
 				.collectList() // <8>
 				.flatMap(list -> Flux.first(list)
-						.timeout(Duration.ofSeconds(timeoutInSeconds)).singleOrEmpty());
+						.timeout(Duration.ofSeconds(timeoutInSeconds)).singleOrEmpty());// <9>
 	}
 
 	private static Mono<ClientResponse> invoke(URI uri, ClientRequest request,

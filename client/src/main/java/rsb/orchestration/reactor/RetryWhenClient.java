@@ -17,7 +17,7 @@ class RetryWhenClient implements ApplicationListener<ApplicationReadyEvent> {
 	@Override
 	public void onApplicationEvent(ApplicationReadyEvent event) {
 		this.client.getOrders(1, 2)//
-				.retryWhen(Retry.backoff(10, Duration.ofSeconds(1)))//
+				.retryWhen(Retry.backoff(10, Duration.ofSeconds(1)))// <1>
 				.subscribe(System.out::println);
 	}
 
