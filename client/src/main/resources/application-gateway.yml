@@ -7,4 +7,4 @@ spring:
         - id: guides
           uri: https://spring.io
           predicates:
-            - After=2017-01-20T17:42:47.789-07:00[America/Denver]
+            - After=2020-09-02T00:00:00.000-00:00[America/Denver]

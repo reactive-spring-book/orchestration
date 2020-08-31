@@ -8,9 +8,6 @@ import org.springframework.security.core.userdetails.MapReactiveUserDetailsServi
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 
-// the way i envision the chapter going is that we introduce basic routes, load balanced
-// routes, and a bunch of other stuff. when we finally get to the rate limiting bits,
-// we'll need to customize this.
 @Configuration
 class SecurityConfiguration {
 
