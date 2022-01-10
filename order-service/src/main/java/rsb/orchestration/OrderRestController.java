@@ -31,8 +31,7 @@ class OrderRestController {
 							max = 1;
 						}
 						for (var i = 0; i < max; i++) {
-							listOfOrders.add(
-									new Order(UUID.randomUUID().toString(), e.getKey()));
+							listOfOrders.add(new Order(UUID.randomUUID().toString(), e.getKey()));
 						}
 						return listOfOrders;
 					}));

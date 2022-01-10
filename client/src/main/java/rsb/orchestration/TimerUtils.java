@@ -1,12 +1,12 @@
 package rsb.orchestration;
 
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-@Log4j2
+@Slf4j
 public abstract class TimerUtils {
 
 	// <1>
@@ -24,8 +24,7 @@ public abstract class TimerUtils {
 		return configMono//
 				.doOnError(exception -> log.error("oops!", exception))//
 				.doOnSubscribe((subscription) -> start.set(System.currentTimeMillis())) //
-				.doOnNext((greeting) -> log.info("total time: {}",
-						System.currentTimeMillis() - start.get()));
+				.doOnNext((greeting) -> log.info("total time: {}", System.currentTimeMillis() - start.get()));
 	}
 
 	public static <T> Flux<T> monitor(Flux<T> configMono) {
@@ -33,8 +32,7 @@ public abstract class TimerUtils {
 		return configMono//
 				.doOnError(exception -> log.error("oops!", exception))//
 				.doOnSubscribe((subscription) -> start.set(System.currentTimeMillis())) //
-				.doOnNext((greeting) -> log.info("total time: {}",
-						System.currentTimeMillis() - start.get()));
+				.doOnNext((greeting) -> log.info("total time: {}", System.currentTimeMillis() - start.get()));
 	}
 
 }

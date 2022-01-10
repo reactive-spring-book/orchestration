@@ -1,18 +1,14 @@
 package rsb.orchestration.reactor;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
-class RetryClient implements ApplicationListener<ApplicationReadyEvent> {
+record RetryClient(OrderClient client) {
 
-	private final OrderClient client;
-
-	@Override
-	public void onApplicationEvent(ApplicationReadyEvent event) {
+	@EventListener(ApplicationReadyEvent.class)
+	public void ready() {
 		this.client.getOrders(1, 2)//
 				.retry(10)// <1>
 				.subscribe(System.out::println);

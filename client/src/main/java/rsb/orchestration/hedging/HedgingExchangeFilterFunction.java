@@ -1,7 +1,7 @@
 package rsb.orchestration.hedging;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.ReactiveDiscoveryClient;
 import org.springframework.web.reactive.function.client.ClientRequest;
@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@Log4j2
+@Slf4j
 @RequiredArgsConstructor
 class HedgingExchangeFilterFunction implements ExchangeFilterFunction {
 
@@ -28,8 +28,7 @@ class HedgingExchangeFilterFunction implements ExchangeFilterFunction {
 	private final int maxNodes;
 
 	@Override
-	public Mono<ClientResponse> filter(ClientRequest clientRequest,
-			ExchangeFunction exchangeFunction) {
+	public Mono<ClientResponse> filter(ClientRequest clientRequest, ExchangeFunction exchangeFunction) {
 		var requestUrl = clientRequest.url();
 		var apiName = requestUrl.getHost();
 		return this.reactiveDiscoveryClient //
@@ -41,12 +40,11 @@ class HedgingExchangeFilterFunction implements ExchangeFilterFunction {
 				.map(si -> buildUriFromServiceInstance(si, requestUrl)) // <6>
 				.map(uri -> invoke(uri, clientRequest, exchangeFunction)) // <7>
 				.collectList() // <8>
-				.flatMap(list -> Flux.first(list)
-						.timeout(Duration.ofSeconds(timeoutInSeconds)).singleOrEmpty());// <9>
+				.flatMap(list -> Flux.firstWithSignal(list).timeout(Duration.ofSeconds(timeoutInSeconds))
+						.singleOrEmpty());// <9>
 	}
 
-	private static Mono<ClientResponse> invoke(URI uri, ClientRequest request,
-			ExchangeFunction next) {
+	private static Mono<ClientResponse> invoke(URI uri, ClientRequest request, ExchangeFunction next) {
 		var newRequest = ClientRequest//
 				.create(request.method(), uri) //
 				.headers(h -> h.addAll(request.headers()))//
@@ -65,10 +63,9 @@ class HedgingExchangeFilterFunction implements ExchangeFilterFunction {
 		return newArrayList;
 	}
 
-	private static URI buildUriFromServiceInstance(ServiceInstance server,
-			URI originalRequestUrl) {
-		return URI.create(originalRequestUrl.getScheme() + "://" + server.getHost() + ':'
-				+ server.getPort() + originalRequestUrl.getPath());
+	private static URI buildUriFromServiceInstance(ServiceInstance server, URI originalRequestUrl) {
+		return URI.create(originalRequestUrl.getScheme() + "://" + server.getHost() + ':' + server.getPort()
+				+ originalRequestUrl.getPath());
 	}
 
 }

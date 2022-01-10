@@ -1,6 +1,6 @@
 package rsb.orchestration;
 
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.context.WebServerInitializedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@Log4j2
+@Slf4j
 @RestController
 class ErrorRestController {
 
@@ -39,8 +39,8 @@ class ErrorRestController {
 	@GetMapping("/ok")
 	Mono<Map<String, String>> okEndpoint(@RequestParam(required = false) String uid) {
 		var countThusFar = this.registerClient(uid);
-		return Mono.just(Map.of("greeting", String.format(
-				"greeting attempt # %s from port %s", countThusFar, this.port.get())));
+		return Mono.just(
+				Map.of("greeting", String.format("greeting attempt # %s from port %s", countThusFar, this.port.get())));
 	}
 
 	// <4>
@@ -49,8 +49,7 @@ class ErrorRestController {
 		var countThusFar = this.registerClient(uid);
 		return countThusFar > 2
 				? Mono.just(Map.of("greeting",
-						String.format("greeting attempt # %s from port %s", countThusFar,
-								this.port.get())))
+						String.format("greeting attempt # %s from port %s", countThusFar, this.port.get())))
 				: Mono.error(new IllegalArgumentException());
 	}
 

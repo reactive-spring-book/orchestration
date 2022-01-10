@@ -14,9 +14,7 @@ class LoadbalancingProxyRouteConfiguration {
 	RouteLocator gateway(RouteLocatorBuilder rlb) {
 		return rlb //
 				.routes()//
-				.route(rs -> rs //
-						.alwaysTrue().uri("lb://error-service") //
-				)//
+				.route(rs -> rs.alwaysTrue().uri("lb://error-service"))//
 				.build();
 
 	}

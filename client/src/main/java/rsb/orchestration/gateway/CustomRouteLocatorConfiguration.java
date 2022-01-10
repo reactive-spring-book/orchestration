@@ -15,10 +15,8 @@ import reactor.core.publisher.Mono;
 class CustomRouteLocatorConfiguration {
 
 	@Bean
-	RouteLocator customRouteLocator(
-			SetPathGatewayFilterFactory setPathGatewayFilterFactory) {// <1>
-		var setPathGatewayFilter = setPathGatewayFilterFactory
-				.apply(config -> config.setTemplate("/guides")); // <2>
+	RouteLocator customRouteLocator(SetPathGatewayFilterFactory setPathGatewayFilterFactory) {// <1>
+		var setPathGatewayFilter = setPathGatewayFilterFactory.apply(config -> config.setTemplate("/guides")); // <2>
 		var orderedGatewayFilter = new OrderedGatewayFilter(setPathGatewayFilter, 0);// <3>
 		var singleRoute = Route// <4>
 				.async() //

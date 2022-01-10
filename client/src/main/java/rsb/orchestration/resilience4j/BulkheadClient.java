@@ -4,10 +4,10 @@ import io.github.resilience4j.bulkhead.Bulkhead;
 import io.github.resilience4j.bulkhead.BulkheadConfig;
 import io.github.resilience4j.reactor.bulkhead.operator.BulkheadOperator;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -17,11 +17,11 @@ import reactor.core.scheduler.Schedulers;
 import java.time.Duration;
 import java.util.UUID;
 
-@Log4j2
+@Slf4j
 @Component
 @Profile("bulkhead")
 @RequiredArgsConstructor
-class BulkheadClient implements ApplicationListener<ApplicationReadyEvent> {
+class BulkheadClient {
 
 	private final String uid = UUID.randomUUID().toString();
 
@@ -38,10 +38,9 @@ class BulkheadClient implements ApplicationListener<ApplicationReadyEvent> {
 			.maxWaitDuration(Duration.ofMillis(5)) //
 			.build());
 
-	@Override
-	public void onApplicationEvent(ApplicationReadyEvent event) {
-		log.info("there are " + availableProcessors
-				+ " available, therefore there should be " + availableProcessors
+	@EventListener(ApplicationReadyEvent.class)
+	public void ready() {
+		log.info("there are " + availableProcessors + " available, therefore there should be " + availableProcessors
 				+ " in the default thread pool");
 		var immediate = Schedulers.immediate();
 		for (var i = 0; i < availableProcessors; i++) {
@@ -57,8 +56,7 @@ class BulkheadClient implements ApplicationListener<ApplicationReadyEvent> {
 				.subscribeOn(scheduler)//
 				.publishOn(scheduler) //
 				.onErrorResume(throwable -> {
-					log.info("the bulkhead kicked in for request #" + i
-							+ ". Received the following exception "
+					log.info("the bulkhead kicked in for request #" + i + ". Received the following exception "
 							+ throwable.getClass().getName() + '.');
 					return Mono.empty();
 				}) //

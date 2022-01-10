@@ -1,7 +1,6 @@
 package rsb.orchestration.gateway;
 
-import lombok.extern.log4j.Log4j2;
-import org.springframework.cloud.gateway.event.RefreshRoutesEvent;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.event.RefreshRoutesResultEvent;
 import org.springframework.cloud.gateway.route.CachingRouteLocator;
 import org.springframework.cloud.gateway.route.Route;
@@ -14,7 +13,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.util.Assert;
 import reactor.core.publisher.Flux;
 
-@Log4j2
+@Slf4j
 @Profile("events")
 @Configuration
 class EventsConfiguration {
@@ -22,11 +21,12 @@ class EventsConfiguration {
 	@EventListener
 	public void refreshRoutesResultEvent(RefreshRoutesResultEvent rre) {
 		log.info(rre.getClass().getSimpleName());
-		Assert.state(rre.getSource() instanceof CachingRouteLocator);
+		Assert.state(rre.getSource() instanceof CachingRouteLocator,
+				() -> "the source must be an instance of " + CachingRouteLocator.class.getName());
 		CachingRouteLocator source = (CachingRouteLocator) rre.getSource();
 		Flux<Route> routes = source.getRoutes();
-		routes.subscribe(route -> log.info(route.getClass() + ":"
-				+ route.getMetadata().toString() + ":" + route.getFilters()));
+		routes.subscribe(
+				route -> log.info(route.getClass() + ":" + route.getMetadata().toString() + ":" + route.getFilters()));
 	}
 
 	@Bean

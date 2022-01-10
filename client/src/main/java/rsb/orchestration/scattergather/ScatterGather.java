@@ -1,28 +1,21 @@
 package rsb.orchestration.scattergather;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import rsb.orchestration.Customer;
 import rsb.orchestration.Order;
-import rsb.orchestration.Profile;
 import rsb.orchestration.TimerUtils;
 
-import java.util.List;
-
-@Log4j2
-@RequiredArgsConstructor
+@Slf4j
 @Component
-class ScatterGather implements ApplicationListener<ApplicationReadyEvent> {
+record ScatterGather(CrmClient client) {
 
-	private final CrmClient client;
-
-	@Override
-	public void onApplicationEvent(ApplicationReadyEvent event) {
+	@EventListener(ApplicationReadyEvent.class)
+	public void ready() {
 		var ids = new Integer[] { 1, 2, 7, 5 }; // <1>
 		// <2>
 		Flux<Customer> customerFlux = TimerUtils.cache(client.getCustomers(ids));
@@ -31,21 +24,20 @@ class ScatterGather implements ApplicationListener<ApplicationReadyEvent> {
 				.flatMap(customer -> { // <3>
 
 					// <4>
-					Mono<List<Order>> filteredOrdersFlux = ordersFlux //
-							.filter(o -> o.getCustomerId().equals(customer.getId()))//
+					var monoOfListOfOrders = ordersFlux //
+							.filter(o -> o.customerId().equals(customer.id()))//
 							.collectList();
 
 					// <5>
-					Mono<Profile> profileMono = client.getProfile(customer.getId());
+					var profileMono = client.getProfile(customer.id());
 
 					// <6>
-					Mono<Customer> customerMono = Mono.just(customer);
+					var customerMono = Mono.just(customer);
 
 					// <7>
-					return Flux.zip(customerMono, filteredOrdersFlux, profileMono);
+					return Flux.zip(customerMono, monoOfListOfOrders, profileMono);
 				})// <8>
-				.map(tuple -> new CustomerOrders(tuple.getT1(), tuple.getT2(),
-						tuple.getT3()));
+				.map(tuple -> new CustomerOrders(tuple.getT1(), tuple.getT2(), tuple.getT3()));
 
 		for (var i = 0; i < 5; i++) // <9>
 			run(customerOrdersFlux);
@@ -56,10 +48,9 @@ class ScatterGather implements ApplicationListener<ApplicationReadyEvent> {
 				.monitor(customerOrdersFlux)//
 				.subscribe(customerOrder -> {
 					log.info("---------------");
-					log.info(customerOrder.getCustomer());
-					log.info(customerOrder.getProfile());
-					customerOrder.getOrders().forEach(order -> log
-							.info(customerOrder.getCustomer().getId() + ": " + order));
+					log.info(customerOrder.customer().toString());
+					log.info(customerOrder.profile().toString());
+					customerOrder.orders().forEach(order -> log.info(customerOrder.customer().id() + ": " + order));
 				});
 	}
 

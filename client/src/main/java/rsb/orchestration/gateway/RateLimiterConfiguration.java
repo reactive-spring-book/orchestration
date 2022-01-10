@@ -28,7 +28,7 @@ class RateLimiterConfiguration {
 								.requestRateLimiter(rl -> rl //
 										.setRateLimiter(redisRateLimiter()) // <1>
 										.setKeyResolver(new PrincipalNameKeyResolver()) // <2>
-						)) //
+								)) //
 						.uri("lb://error-service")) //
 				.build();
 	}

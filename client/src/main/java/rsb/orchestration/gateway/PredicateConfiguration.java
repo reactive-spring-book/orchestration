@@ -28,9 +28,8 @@ class PredicateConfiguration {
 						.uri("http://httpbin.org/") //
 				) //
 				.route(routeSpec -> routeSpec // <4>
-						.asyncPredicate(
-								serverWebExchange -> Mono.just(Math.random() > .5))
-						.and().path("/test").uri("http://httpbin.org/") //
+						.asyncPredicate(serverWebExchange -> Mono.just(Math.random() > .5)).and().path("/test")
+						.uri("http://httpbin.org/") //
 				) //
 				.build();
 	}
